@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    {# Title #}
+    <title>{% block title %}{{ title }} - {{ SITE_LONG_NAME }}{% endblock %}</title>
+
+    {# SEO Meta Tags #}
+    {% if misc_config.meta_keywords %}
+        <meta name="keywords" content="{{ misc_config.meta_keywords }}">
+    {% endif %}
+    {% if meta_description %}
+        <meta name="description" property="og:description" content="{{ meta_description }}">
+    {% endif %}
+
+    {# Favicons #}
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ static('icons/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ static('icons/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ static('icons/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ static('icons/manifest.json') }}">
+    <meta name="theme-color" content="#2563eb">
+
+    {# Open Graph / Social Media #}
+    {% if og_image %}
+        <meta property="og:image" content="{{ request.build_absolute_uri(og_image) }}">
+    {% else %}
+        <meta property="og:image" content="{{ request.build_absolute_uri(static('logo.png')) }}">
+    {% endif %}
+    <meta property="og:site_name" content="{{ SITE_LONG_NAME }}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ SITE_LONG_NAME }}">
+    <meta property="og:url" content="{{ DMOJ_SCHEME }}://{{ DMOJ_CANONICAL|default(site.domain) }}{{ request.get_full_path() }}">
+    <meta property="og:description" content="Luyện code & Học lập trình tương tác trực tuyến">
+
+    {# Twitter #}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ SITE_LONG_NAME }}">
+    <meta name="twitter:description" content="Luyện code & Học lập trình tương tác trực tuyến">
+
+    {# Canonical URL #}
+    <link rel="canonical" href="{{ DMOJ_SCHEME }}://{{ DMOJ_CANONICAL|default(site.domain) }}{{ request.get_full_path() }}">
+
+    {# Custom Meta #}
+    {% block meta %}{% endblock %}
+
+    {# Vite Assets - Modern Build Pipeline #}
+    {% import "vite-assets.html" as vite %}
+    {{ vite.setup() }}
+
+    {# Legacy Font Awesome (if needed) #}
+    {% if not INLINE_FONTAWESOME %}
+        <link rel="stylesheet" href="{{ FONTAWESOME_CSS }}" media="print" onload="this.media='all'">
+    {% endif %}
+
+    {# Additional Styles #}
+    {% block extra_css %}{% endblock %}
+
+    {# Impersonate Indicator #}
+    {% if request.user.is_impersonate %}
+        <style>
+            body::before {
+                content: 'IMPERSONATING {{ request.user.username }}';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: #7c3aed;
+                color: white;
+                text-align: center;
+                padding: 0.5rem;
+                font-weight: bold;
+                z-index: 10000;
+            }
+            body {
+                padding-top: 2.5rem;
+            }
+        </style>
+    {% endif %}
+</head>
+
+<body class="bg-gray-50 text-gray-900 antialiased" x-data="{ mobileMenuOpen: false, userMenuOpen: false }">
+    {# SVG Definitions #}
+    <svg width="0" height="0" style="display: none;">
+        <defs>
+            <clipPath id="rating-clip"><circle cx="8" cy="8" r="7"/></clipPath>
+        </defs>
+    </svg>
+
+    {# Navigation Bar #}
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                {# Logo & Brand #}
+                <div class="flex items-center gap-6">
+                    {# Mobile Menu Button #}
+                    <button
+                        @click="mobileMenuOpen = !mobileMenuOpen"
+                        class="lg:hidden btn btn-ghost !p-2"
+                        aria-label="Toggle menu"
+                    >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+
+                    {# Logo #}
+                    <a href="{{ url('home') }}" class="flex items-center gap-2">
+                        {% include "site-logo-fragment.html" %}
+                    </a>
+
+                    {# Desktop Navigation #}
+                    <ul class="hidden lg:flex items-center gap-1">
+                        {% if request.organization is not defined %}
+                            <li><a href="{{ url('home') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors {{ 'bg-primary-50 text-primary-700' if 'home' in nav_tab }}">{{ _('Home') }}</a></li>
+
+                            {% for node in mptt_tree(nav_bar) recursive %}
+                                {% if node.is_leaf_node() %}
+                                    <li>
+                                        <a href="{{ node.path }}" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors {{ 'bg-primary-50 text-primary-700' if node.key in nav_tab }}">
+                                            {{ _(node.label) }}
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li x-data="{ open: false }" @click.away="open = false" class="relative">
+                                        <button
+                                            @click="open = !open"
+                                            class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors flex items-center gap-1"
+                                        >
+                                            {{ _(node.label) }}
+                                            <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                            </svg>
+                                        </button>
+                                        <div
+                                            x-show="open"
+                                            x-transition
+                                            class="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1"
+                                            x-cloak
+                                        >
+                                            {% for child in node.get_children() %}
+                                                <a href="{{ child.path }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                    {{ _(child.label) }}
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {# Organization Navigation #}
+                            {% set org = request.organization %}
+                            <li><a href="{{ url('problem_list_organization', org.slug) }}" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">{{ _('Problems') }}</a></li>
+                            <li><a href="{{ url('submission_list_organization', org.slug) }}" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">{{ _('Submissions') }}</a></li>
+                            <li><a href="{{ url('contest_list_organization', org.slug) }}" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">{{ _('Contests') }}</a></li>
+                            <li><a href="{{ org.get_users_url() }}" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">{{ _('Users') }}</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                {# Right Side Actions #}
+                <div class="flex items-center gap-3">
+                    {# Report Issue #}
+                    <a
+                        href="{% if request.resolver_match.view_name == 'problem_detail' and problem %}{{ url('new_problem_ticket', problem.code) }}{% else %}/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}{% endif %}"
+                        class="hidden md:block text-warning-600 hover:text-warning-700 transition-colors"
+                        title="{{ _('Report issue') }}"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </a>
+
+                    {# Language Switcher #}
+                    <div class="hidden md:flex items-center gap-1">
+                        <button
+                            onclick="submmit_language('vi')"
+                            class="p-1 rounded hover:bg-gray-100 transition-colors {{ 'ring-2 ring-primary-500' if LANGUAGE_CODE == 'vi' }}"
+                            title="Tiếng Việt"
+                        >
+                            <img src="{{ static('icons/vi_flag.svg') }}" alt="VI" class="w-6 h-6">
+                        </button>
+                        <button
+                            onclick="submmit_language('en')"
+                            class="p-1 rounded hover:bg-gray-100 transition-colors {{ 'ring-2 ring-primary-500' if LANGUAGE_CODE == 'en' }}"
+                            title="English"
+                        >
+                            <img src="{{ static('icons/gb_flag.svg') }}" alt="EN" class="w-6 h-6">
+                        </button>
+                    </div>
+
+                    {# User Menu #}
+                    {% if request.user.is_authenticated %}
+                        <div x-data="{ userMenuOpen: false }" @click.away="userMenuOpen = false" class="relative">
+                            <button
+                                @click="userMenuOpen = !userMenuOpen"
+                                class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                                <img
+                                    src="{{ gravatar(request.user, 64) }}"
+                                    alt="{{ request.user.username }}"
+                                    class="w-8 h-8 rounded-full"
+                                >
+                                <span class="hidden md:block text-sm font-medium text-gray-700">
+                                    {{ request.user.first_name or request.profile.display_name }}
+                                </span>
+                                <svg class="w-4 h-4 text-gray-500 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+
+                            {# User Dropdown #}
+                            <div
+                                x-show="userMenuOpen"
+                                x-transition
+                                class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1"
+                                x-cloak
+                            >
+                                <div class="px-4 py-3 border-b border-gray-200">
+                                    <p class="text-sm font-medium text-gray-900">{{ request.user.first_name or request.profile.display_name }}</p>
+                                    <p class="text-xs text-gray-500 truncate">{{ request.user.email }}</p>
+                                </div>
+
+                                <a href="{{ url('user_page') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    {{ _('Profile') }}
+                                </a>
+                                <a href="{{ url('user_edit_profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    {{ _('Edit profile') }}
+                                </a>
+
+                                {% if request.user.is_staff or request.user.is_superuser %}
+                                    <a href="{{ url('admin:index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        {{ _('Admin') }}
+                                    </a>
+                                {% endif %}
+
+                                <div class="border-t border-gray-200 my-1"></div>
+
+                                {% if request.user.is_impersonate %}
+                                    <a href="{{ url('impersonate-stop') }}" class="block px-4 py-2 text-sm text-error-600 hover:bg-error-50">
+                                        {{ _('Stop impersonating') }}
+                                    </a>
+                                {% else %}
+                                    <form action="{{ url('auth_logout') }}" method="POST" class="block">
+                                        {% csrf_token %}
+                                        <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            {{ _('Log out') }}
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url('auth_login') }}?next={{ LOGIN_RETURN_PATH|urlencode }}" class="btn btn-ghost btn-sm">
+                                {{ _('Log in') }}
+                            </a>
+                            {% if REGISTRATION_OPEN %}
+                                <a href="{{ url('registration_register') }}" class="btn btn-primary btn-sm">
+                                    {{ _('Sign up') }}
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Mobile Menu #}
+        <div
+            x-show="mobileMenuOpen"
+            x-transition
+            class="lg:hidden border-t border-gray-200"
+            x-cloak
+        >
+            <div class="px-4 py-4 space-y-1">
+                {% if request.organization is not defined %}
+                    <a href="{{ url('home') }}" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">{{ _('Home') }}</a>
+
+                    {% for node in mptt_tree(nav_bar) %}
+                        <a href="{{ node.path }}" class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100">
+                            {{ _(node.label) }}
+                        </a>
+                    {% endfor %}
+                {% endif %}
+
+                {# Mobile Language Switcher #}
+                <div class="flex items-center gap-2 px-3 py-2">
+                    <button onclick="submmit_language('vi')" class="flex items-center gap-2 text-sm text-gray-700">
+                        <img src="{{ static('icons/vi_flag.svg') }}" alt="VI" class="w-5 h-5">
+                        Tiếng Việt
+                    </button>
+                    <span class="text-gray-400">|</span>
+                    <button onclick="submmit_language('en')" class="flex items-center gap-2 text-sm text-gray-700">
+                        <img src="{{ static('icons/gb_flag.svg') }}" alt="EN" class="w-5 h-5">
+                        English
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {# Contest Info Banner #}
+    {% if request.in_contest %}
+        {% set current_contest = request.participation.contest %}
+        <div class="bg-primary-600 text-white">
+            <div class="container mx-auto px-4 py-3">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <a href="{{ url('contest_view', current_contest.key) }}" class="font-semibold hover:underline">
+                                {{ current_contest.name }}
+                            </a>
+                            <span class="text-primary-100 text-sm ml-2">
+                                {% if request.participation.spectate %}
+                                    {{ _('spectating') }}
+                                {% elif request.participation.end_time %}
+                                    <span id="contest-time-remaining" data-secs="{{ request.participation.time_remaining|seconds }}">
+                                        {{ request.participation.time_remaining|timedelta("localized") }}
+                                    </span>
+                                {% else %}
+                                    {{ _('virtual') }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if current_contest.can_see_own_scoreboard(request.user) %}
+                        <a href="{{ url('contest_ranking', current_contest.key) }}" class="btn btn-sm bg-white text-primary-600 hover:bg-primary-50">
+                            {{ _('View Rankings') }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {# Top Notification #}
+    {% if misc_config.top_notification %}
+        <div class="bg-info-50 border-b border-info-200">
+            <div class="container mx-auto px-4 py-3">
+                {{ render_django(misc_config.top_notification) }}
+            </div>
+        </div>
+    {% endif %}
+
+    {# Main Content #}
+    <main class="container mx-auto px-4 py-8">
+        {# Page Title #}
+        {% block title_row %}
+            <div class="mb-6">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900">
+                    {% block content_title %}
+                        {% if content_title %}{{ content_title }}{% else %}{{ title }}{% endif %}
+                    {% endblock %}
+                </h1>
+            </div>
+        {% endblock %}
+
+        {# Header Section #}
+        {% block header %}{% endblock %}
+
+        {# Title Ruler #}
+        {% block title_ruler %}
+            <hr class="mb-6 border-gray-200">
+        {% endblock %}
+
+        {# Main Content Body #}
+        <div id="content-body">
+            {% block body %}{% endblock %}
+        </div>
+    </main>
+
+    {# Announcement Banner #}
+    {% if misc_config.announcement %}
+        <div class="fixed bottom-4 right-4 max-w-md z-50">
+            <div class="alert alert-info shadow-lg">
+                {{ misc_config.announcement|safe }}
+            </div>
+        </div>
+    {% endif %}
+
+    {# Footer #}
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="container mx-auto px-4 py-8">
+            <div class="text-center text-sm text-gray-600">
+                <p>
+                    {{ _('proudly powered by') }}
+                    <a href="https://oj.vnoi.info" class="font-semibold text-gray-900 hover:text-primary-600 transition-colors">VNOJ</a>
+                    <span class="mx-2">|</span>
+                    <a href="https://github.com/luyencode" class="font-semibold text-gray-900 hover:text-primary-600 transition-colors">Github</a>
+                    {% if misc_config.footer %}
+                        <span class="mx-2">|</span>
+                        {{ misc_config.footer|safe }}
+                    {% endif %}
+                </p>
+                <p class="mt-2 text-xs text-gray-500">
+                    © {{ "now"|date("Y") }} {{ SITE_NAME }}. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    {# Language Form #}
+    <form id="set_language" action="{{ url('set_language') }}" method="post" style="display: none">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path() }}">
+        <input name="language" type="hidden" value="{{ LANGUAGE_CODE }}">
+    </form>
+
+    {# Scripts #}
+    {% block extra_js %}{% endblock %}
+
+    {# Legacy JavaScript Support #}
+    <script>
+        // Language switcher
+        function submmit_language(lang) {
+            if (lang != "{{ LANGUAGE_CODE }}") {
+                document.querySelector("input[name=language]").value = lang;
+                document.getElementById("set_language").submit();
+            }
+        }
+
+        // User data for legacy compatibility
+        window.user = {% if request.user.is_authenticated and not tfa_in_progress %}{
+            email: '{{ request.user.email|escapejs }}',
+            id: '{{ request.user.id|escapejs }}',
+            name: '{{ request.user.username|escapejs }}'
+        }{% else %}{}{% endif %};
+
+        {% if request.in_contest and request.participation.end_time %}
+            // Contest countdown timer
+            function count_down(element) {
+                var secs = parseInt(element.dataset.secs);
+                if (secs <= 0) return;
+
+                setInterval(function() {
+                    secs--;
+                    if (secs <= 0) {
+                        element.textContent = '{{ _("Contest ended") }}';
+                        return;
+                    }
+
+                    var hours = Math.floor(secs / 3600);
+                    var minutes = Math.floor((secs % 3600) / 60);
+                    var seconds = secs % 60;
+
+                    element.textContent = hours.toString().padStart(2, '0') + ':' +
+                                         minutes.toString().padStart(2, '0') + ':' +
+                                         seconds.toString().padStart(2, '0');
+                }, 1000);
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                var timer = document.getElementById('contest-time-remaining');
+                if (timer) count_down(timer);
+            });
+        {% endif %}
+    </script>
+
+    {# Analytics #}
+    {% if misc_config.analytics %}
+        {{ misc_config.analytics|safe }}
+    {% endif %}
+
+    {# User Script #}
+    {% if request.user.is_authenticated and request.profile.user_script and not request.user.is_impersonate and not tfa_in_progress and not ignore_user_script %}
+        <script>{{ request.profile.user_script|safe }}</script>
+    {% endif %}
+
+    {# Event Dispatcher #}
+    {% if EVENT_LAST_MSG %}
+        <script src="{{ static('event.js') }}"></script>
+        <script>
+            window.event_dispatcher = new WSEventDispatcher(
+                '{{ EVENT_DAEMON_LOCATION }}',
+                '{{ EVENT_DAEMON_POLL_LOCATION }}',
+                {{ EVENT_LAST_MSG }}
+            );
+
+            {% if request.in_contest and EVENT_LAST_MSG and request.participation.contest.push_announcements and request.participation.virtual <= 0 %}
+                event_dispatcher.auto_reconnect = true;
+                event_dispatcher.on('contest_{{ request.participation.contest.id_secret }}', function(data) {
+                    alert(data.title + '\n\n' + data.message);
+                });
+            {% endif %}
+        </script>
+    {% endif %}
+
+    {% block bodyend %}{% endblock %}
+
+    {# NoScript Warning #}
+    <noscript>
+        <div class="fixed bottom-4 left-4 right-4 bg-warning-50 border border-warning-200 rounded-lg p-4 text-sm text-warning-900 shadow-lg z-50">
+            {{ _('This site works best with JavaScript enabled.') }}
+        </div>
+    </noscript>
+</body>
+</html>

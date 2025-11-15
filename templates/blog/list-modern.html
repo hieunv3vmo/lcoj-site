@@ -1,0 +1,164 @@
+{% extends "base-modern.html" %}
+{% import "components/cards.html" as card %}
+{% import "components/badges.html" as badge %}
+{% import "components/buttons.html" as btn %}
+{% import "components/navigation.html" as nav %}
+
+{% block title_row %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block meta %}
+    <link rel="alternate" type="application/atom+xml" href="{{ url('blog_atom') }}" title="Atom Blog Feed">
+    <link rel="alternate" type="application/rss+xml" href="{{ url('blog_rss') }}" title="RSS Blog Feed">
+    <link rel="alternate" type="application/atom+xml" href="{{ url('comment_atom') }}" title="Atom Comment Feed">
+    <link rel="alternate" type="application/rss+xml" href="{{ url('comment_rss') }}" title="RSS Comment Feed">
+    <link rel="alternate" type="application/atom+xml" href="{{ url('problem_atom') }}" title="Atom Problem Feed">
+    <link rel="alternate" type="application/rss+xml" href="{{ url('problem_rss') }}" title="RSS Problem Feed">
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            // Contest countdown timers
+            document.querySelectorAll('.time-remaining').forEach(function(elem) {
+                const secs = parseInt(elem.dataset.secs);
+                if (secs <= 0) return;
+
+                setInterval(function() {
+                    const remaining = Math.max(0, secs - Math.floor((Date.now() - elem.dataset.start) / 1000));
+                    if (remaining <= 0) {
+                        elem.textContent = '{{ _("Ended") }}';
+                        return;
+                    }
+
+                    const hours = Math.floor(remaining / 3600);
+                    const minutes = Math.floor((remaining % 3600) / 60);
+                    const seconds = remaining % 60;
+
+                    elem.textContent = hours.toString().padStart(2, '0') + ':' +
+                                     minutes.toString().padStart(2, '0') + ':' +
+                                     seconds.toString().padStart(2, '0');
+                }, 1000);
+            });
+        });
+    </script>
+
+    {% if gcse_url %}
+    <script async src="{{ gcse_url }}"></script>
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    {% block before_posts %}{% endblock %}
+
+    {# Mobile Tab Switcher #}
+    <div class="lg:hidden mb-6" x-data="{ activeTab: 'blog' }">
+        <div class="flex gap-2 mb-4">
+            <button
+                @click="activeTab = 'blog'"
+                class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors"
+                :class="activeTab === 'blog' ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'"
+            >
+                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('Blog') }}
+            </button>
+            <button
+                @click="activeTab = 'events'"
+                class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors"
+                :class="activeTab === 'events' ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'"
+            >
+                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
+                    <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/>
+                </svg>
+                {{ _('Events') }}
+            </button>
+        </div>
+
+        {# Mobile Blog Content #}
+        <div x-show="activeTab === 'blog'" x-transition>
+            {% include "blog/blog-list-tabs-modern.html" %}
+            {% block blog_posts_mobile %}
+                {% if show_all_blogs and gcse_url %}
+                <div class="card mb-4">
+                    <form action="/" method="get" role="search" id="blog-search-form">
+                        <label class="label">{{ _("Search blog") }}</label>
+                        <div class="flex gap-2">
+                            <input autocomplete="off" type="text" name="q" placeholder="{{ _('Search with Google') }}" class="input flex-1">
+                            {{ btn.primary(_("Search"), type='submit') }}
+                        </div>
+                    </form>
+                    <div class="gcse-searchresults-only mt-4"></div>
+                </div>
+                {% endif %}
+
+                <div class="space-y-6">
+                    {% for post in posts %}
+                        {% include "blog/blog-post-modern.html" %}
+                    {% endfor %}
+                </div>
+
+                {% if page_obj.has_other_pages() %}
+                    <div class="mt-8">
+                        {% include "list-pages-modern.html" %}
+                    </div>
+                {% endif %}
+            {% endblock %}
+        </div>
+
+        {# Mobile Events Sidebar #}
+        <div x-show="activeTab === 'events'" x-transition>
+            {% include "blog/sidebar-modern.html" %}
+        </div>
+    </div>
+
+    {# Desktop Two-Column Layout #}
+    <div class="hidden lg:grid lg:grid-cols-3 lg:gap-8">
+        {# Main Content - Blog Posts #}
+        <div class="lg:col-span-2">
+            {% include "blog/blog-list-tabs-modern.html" %}
+
+            {% if show_all_blogs and gcse_url %}
+            <div class="card mb-6">
+                <form action="/" method="get" role="search" id="blog-search-form">
+                    <label class="label">{{ _("Search blog") }}</label>
+                    <div class="flex gap-2">
+                        <input autocomplete="off" type="text" name="q" placeholder="{{ _('Search with Google') }}" class="input flex-1">
+                        {{ btn.primary(_("Search"), type='submit') }}
+                    </div>
+                </form>
+                <div class="gcse-searchresults-only mt-4"></div>
+            </div>
+            {% endif %}
+
+            <div class="space-y-6">
+                {% for post in posts %}
+                    {% include "blog/blog-post-modern.html" %}
+                {% endfor %}
+            </div>
+
+            {% if page_obj.has_other_pages() %}
+                <div class="mt-8">
+                    {% include "list-pages-modern.html" %}
+                </div>
+            {% endif %}
+        </div>
+
+        {# Sidebar - Events & Activity #}
+        <div class="lg:col-span-1">
+            {% include "blog/sidebar-modern.html" %}
+        </div>
+    </div>
+
+    {% block after_posts %}{% endblock %}
+{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
+{% endblock %}

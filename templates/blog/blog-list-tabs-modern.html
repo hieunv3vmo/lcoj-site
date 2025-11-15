@@ -1,0 +1,24 @@
+{# Modern Blog List Tabs #}
+<div class="mb-6">
+    <nav class="flex gap-2 border-b border-gray-200">
+        <a
+            href="{{ newsfeed_link }}"
+            class="px-4 py-3 text-sm font-medium rounded-t-lg transition-colors {{ 'bg-white text-primary-600 border-b-2 border-primary-600 -mb-px' if tab == 'home' else 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}"
+        >
+            <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
+                <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/>
+            </svg>
+            {{ _('Newsfeed') }}
+        </a>
+        <a
+            href="{{ all_blogs_link }}"
+            class="px-4 py-3 text-sm font-medium rounded-t-lg transition-colors {{ 'bg-white text-primary-600 border-b-2 border-primary-600 -mb-px' if tab == 'blog_list' else 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}"
+        >
+            <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
+            {{ _('Blogs') }}
+        </a>
+    </nav>
+</div>

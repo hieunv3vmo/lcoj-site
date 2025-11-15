@@ -1,0 +1,151 @@
+<div class="card">
+    <h3 class="card-title flex items-center gap-2 mb-4">
+        {{ _('Problem search') }}
+        <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+    </h3>
+
+    <form id="filter-form" name="form" action="" method="get" class="space-y-4">
+        {# Search Input #}
+        <div>
+            <input
+                id="search"
+                type="text"
+                name="search"
+                value="{{ search_query or '' }}"
+                placeholder="{{ _('Search problems...') }}"
+                class="input w-full"
+            >
+        </div>
+
+        {# Checkboxes #}
+        {% if has_fts %}
+        <label class="flex items-center gap-2 cursor-pointer">
+            <input
+                id="full_text"
+                type="checkbox"
+                name="full_text"
+                value="1"
+                {% if full_text %}checked{% endif %}
+                class="rounded text-primary-600 focus:ring-primary-500"
+            >
+            <span class="text-sm text-gray-700">{{ _('Full text search') }}</span>
+        </label>
+        {% endif %}
+
+        {% if request.user.is_authenticated %}
+        <label class="flex items-center gap-2 cursor-pointer">
+            <input
+                id="hide_solved"
+                type="checkbox"
+                name="hide_solved"
+                value="1"
+                {% if hide_solved %}checked{% endif %}
+                class="rounded text-primary-600 focus:ring-primary-500"
+            >
+            <span class="text-sm text-gray-700">{{ _('Hide solved problems') }}</span>
+        </label>
+        {% endif %}
+
+        <label class="flex items-center gap-2 cursor-pointer">
+            <input
+                id="has_public_editorial"
+                type="checkbox"
+                name="has_public_editorial"
+                value="1"
+                {% if has_public_editorial %}checked{% endif %}
+                class="rounded text-primary-600 focus:ring-primary-500"
+            >
+            <span class="text-sm text-gray-700">{{ _('Has editorial') }}</span>
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+            <input
+                id="show_types"
+                type="checkbox"
+                name="show_types"
+                value="1"
+                {% if show_types %}checked{% endif %}
+                class="rounded text-primary-600 focus:ring-primary-500"
+            >
+            <span class="text-sm text-gray-700">{{ _('Show problem types') }}</span>
+        </label>
+
+        {# Category Select #}
+        <div>
+            <label for="category" class="label">{{ _('Category') }}</label>
+            <select id="category" name="category" class="input w-full">
+                {% if category %}
+                    <option value="" selected="selected">{{ _('All') }}</option>
+                {% else %}
+                    <option value="">{{ _('All') }}</option>
+                {% endif %}
+                <option disabled="disabled">---</option>
+                {% for group in categories %}
+                    <option value="{{ group.id }}"{% if group.id == category %} selected{% endif %}>
+                        {{ group.full_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {# Problem Types Select #}
+        <div>
+            <label for="types" class="label">{{ _('Problem types') }}</label>
+            <select id="types" name="type" multiple class="input w-full" size="4">
+                {% for type in problem_types %}
+                    <option value="{{ type.id }}"{% if type.id in selected_types %} selected{% endif %}>
+                        {{ user_trans(type.full_name) }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {# Point Range Slider #}
+        {% if point_values %}
+        <div>
+            <label class="label mb-3">{{ _('Point range') }}</label>
+            <div id="point-slider" class="mb-8"></div>
+        </div>
+        {% endif %}
+
+        <input id="point-start" type="hidden" name="point_start" {% if point_start and point_start != point_values.min %}value="{{ point_start }}"{% else %}disabled{% endif %}>
+        <input id="point-end" type="hidden" name="point_end" {% if point_end and point_end != point_values.max %}value="{{ point_end }}"{% else %}disabled{% endif %}>
+
+        {# Action Buttons #}
+        <div class="flex gap-2">
+            <button type="button" id="go" class="btn btn-primary flex-1">
+                {{ _('Go') }}
+            </button>
+            <button type="button" id="random" class="btn btn-accent flex-1">
+                {{ _('Random') }}
+            </button>
+        </div>
+    </form>
+
+    <script>
+        // Sort problem types alphabetically
+        (function() {
+            var typesSelect = document.getElementById("types");
+            if (!typesSelect) return;
+
+            var options = Array.from(typesSelect.options);
+            var selected = Array.from(typesSelect.selectedOptions).map(opt => opt.value);
+
+            options.sort(function(a, b) {
+                return a.text.localeCompare(b.text, 'vi');
+            });
+
+            typesSelect.innerHTML = '';
+            options.forEach(function(option) {
+                typesSelect.appendChild(option);
+            });
+
+            selected.forEach(function(value) {
+                var option = typesSelect.querySelector(`option[value="${value}"]`);
+                if (option) option.selected = true;
+            });
+        })();
+    </script>
+</div>

@@ -1,0 +1,129 @@
+{% import "components/badges.html" as badge %}
+{% set logged_in = request.user.is_authenticated %}
+{% set profile = request.profile if logged_in else None %}
+
+<article class="card {% if post.sticky %}border-l-4 border-l-accent-500{% endif %}" id="post-{{ post.id }}">
+    {# Sticky Indicator #}
+    {% if post.sticky %}
+        <div class="flex items-center gap-2 mb-3 text-accent-600">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+            <span class="text-sm font-semibold">{{ _('Pinned Post') }}</span>
+        </div>
+    {% endif %}
+
+    {# Post Header #}
+    <div class="flex gap-4 mb-4">
+        {# Vote Section #}
+        <div class="flex flex-col items-center gap-1 pt-1">
+            {% if logged_in %}
+                <button
+                    onclick="blog_upvote({{ post.id }})"
+                    class="text-gray-400 hover:text-primary-600 transition-colors {{ 'text-primary-600' if post.vote_score == 1 }}"
+                    title="{{ _('Upvote') }}"
+                >
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+            {% else %}
+                <button
+                    onclick="alert('{{ _('Please log in to vote')|escapejs }}')"
+                    class="text-gray-400 hover:text-primary-600 transition-colors"
+                    title="{{ _('Please log in to vote') }}"
+                >
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+            {% endif %}
+
+            <span id="post-score-{{ post.id }}" class="text-lg font-bold text-gray-900">{{ post.score }}</span>
+
+            {% if logged_in %}
+                <button
+                    onclick="blog_downvote({{ post.id }})"
+                    class="text-gray-400 hover:text-error-600 transition-colors {{ 'text-error-600' if post.vote_score == -1 }}"
+                    title="{{ _('Downvote') }}"
+                >
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+            {% else %}
+                <button
+                    onclick="alert('{{ _('Please log in to vote')|escapejs }}')"
+                    class="text-gray-400 hover:text-error-600 transition-colors"
+                    title="{{ _('Please log in to vote') }}"
+                >
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+            {% endif %}
+        </div>
+
+        {# Post Content #}
+        <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                <a href="{{ url('blog_post', post.id, post.slug) }}" class="hover:text-primary-600 transition-colors">
+                    {% if not post.visible %}
+                        <svg class="w-5 h-5 inline-block text-error-600 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                        </svg>
+                    {% endif %}
+                    {{ post.title }}
+                </a>
+            </h2>
+
+            {# Post Meta #}
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600 mb-4">
+                {% with authors=post.authors.all() %}
+                    {%- if authors -%}
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                            </svg>
+                            {{ link_users(authors) }}
+                        </span>
+                    {%- endif -%}
+                {% endwith %}
+
+                <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                    </svg>
+                    {% with abs=_('posted on {time}'), rel=_('posted {time}') %}
+                        {{ relative_time(post.publish_on, abs=abs, rel=rel) }}
+                    {% endwith %}
+                </span>
+
+                <a href="{{ url('blog_post', post.id, post.slug) }}#comments" class="flex items-center gap-1 hover:text-primary-600 transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>{{ post_comment_counts[post.id] or 0 }}</span>
+                </a>
+            </div>
+
+            {# Post Content/Summary #}
+            <div class="prose max-w-none">
+                {% cache 86400 'post_summary' post.id %}
+                    {{ post.summary|default(post.content, true)|markdown('blog', 'svg', lazy_load=True)|reference|str|safe }}
+                {% endcache %}
+            </div>
+
+            {%- if post.summary -%}
+                <div class="mt-4">
+                    <a href="{{ url('blog_post', post.id, post.slug) }}" class="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium">
+                        {{ _('Continue reading...') }}
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            {%- endif -%}
+        </div>
+    </div>
+</article>

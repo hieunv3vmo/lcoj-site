@@ -1,0 +1,60 @@
+{# Modern Problem List Tabs #}
+<div class="mb-6">
+    <nav class="flex gap-2 border-b border-gray-200 overflow-x-auto">
+        {% if request.user.has_perm('judge.add_problem') %}
+            <a
+                href="{{ url('problem_create') }}"
+                class="px-4 py-3 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap {{ 'bg-white text-primary-600 border-b-2 border-primary-600 -mb-px' if tab == 'create' else 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}"
+            >
+                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('Create new problem') }}
+            </a>
+        {% elif request.user.has_perm('judge.suggest_new_problem') %}
+            <a
+                href="{{ url('problem_suggest') }}"
+                class="px-4 py-3 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap {{ 'bg-white text-primary-600 border-b-2 border-primary-600 -mb-px' if tab == 'suggest' else 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}"
+            >
+                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('Suggest new problem') }}
+            </a>
+        {% endif %}
+
+        <a
+            href="{{ url('problem_list') }}"
+            class="px-4 py-3 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap {{ 'bg-white text-primary-600 border-b-2 border-primary-600 -mb-px' if tab == 'list' else 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}"
+        >
+            <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+            </svg>
+            {{ _('List') }}
+        </a>
+
+        {% if perms.judge.edit_all_problem or perms.judge.edit_public_problem or perms.judge.edit_own_problem %}
+            <a
+                href="{{ url('problem_suggest_list') }}"
+                class="px-4 py-3 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap {{ 'bg-white text-primary-600 border-b-2 border-primary-600 -mb-px' if tab == 'suggest' else 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}"
+            >
+                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('Suggest') }}
+            </a>
+        {% endif %}
+
+        {% if request.user.is_superuser %}
+            <a
+                href="{{ url('admin:judge_problem_changelist') }}"
+                class="px-4 py-3 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap {{ 'bg-white text-primary-600 border-b-2 border-primary-600 -mb-px' if tab == 'admin' else 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}"
+            >
+                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                </svg>
+                {{ _('Admin') }}
+            </a>
+        {% endif %}
+    </nav>
+</div>

@@ -1,0 +1,80 @@
+{# Modern Pagination Component #}
+{% import "components/navigation.html" as nav %}
+
+{% if page_obj.has_other_pages() %}
+    <nav class="flex items-center justify-between" aria-label="Pagination">
+        {# Previous Button #}
+        {% if page_obj.has_previous() %}
+            {% if page_obj.previous_page_number() == 1 and first_page_href != None %}
+                <a
+                    href="{{ first_page_href }}"
+                    class="btn btn-outline btn-sm"
+                >
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    {{ _('Previous') }}
+                </a>
+            {% else %}
+                <a
+                    href="{{ page_prefix or '' }}{{ page_obj.previous_page_number() }}{{ page_suffix or '' }}"
+                    class="btn btn-outline btn-sm"
+                >
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    {{ _('Previous') }}
+                </a>
+            {% endif %}
+        {% else %}
+            <button disabled class="btn btn-outline btn-sm opacity-50 cursor-not-allowed">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                {{ _('Previous') }}
+            </button>
+        {% endif %}
+
+        {# Page Numbers #}
+        <div class="flex items-center gap-1">
+            {% for page in page_obj.page_range %}
+                {% if not page %}
+                    <span class="px-3 py-1 text-gray-400">...</span>
+                {% else %}
+                    {% if page == page_obj.number %}
+                        <span class="px-3 py-1 bg-primary-600 text-white rounded-lg font-medium">
+                            {{ page }}
+                        </span>
+                    {% else %}
+                        <a
+                            href="{% if page == 1 and first_page_href != None %}{{ first_page_href }}{% else %}{{ page_prefix or '' }}{{ page }}{{ page_suffix or '' }}{% endif %}"
+                            class="px-3 py-1 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            {{ page }}
+                        </a>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {# Next Button #}
+        {% if page_obj.has_next() %}
+            <a
+                href="{{ page_prefix or '' }}{{ page_obj.next_page_number() }}{{ page_suffix or '' }}"
+                class="btn btn-outline btn-sm"
+            >
+                {{ _('Next') }}
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </a>
+        {% else %}
+            <button disabled class="btn btn-outline btn-sm opacity-50 cursor-not-allowed">
+                {{ _('Next') }}
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+        {% endif %}
+    </nav>
+{% endif %}
