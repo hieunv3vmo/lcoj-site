@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LCOJ Design System Showcase</title>
+  {% import "vite-assets.html" as vite %}
+  {{ vite.setup() }}
+</head>
+<body class="bg-gray-50">
+  <div class="container mx-auto max-w-7xl px-4 py-12">
+    <!-- Header -->
+    <header class="mb-12">
+      <h1 class="text-5xl font-bold text-gray-900 mb-4">LCOJ Design System</h1>
+      <p class="text-xl text-gray-600">Phase 2: Comprehensive Design Foundation</p>
+    </header>
+
+    <!-- Colors Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Colors</h2>
+
+      <div class="space-y-8">
+        <!-- Primary Colors -->
+        <div>
+          <h3 class="text-xl font-semibold mb-4">Primary (Blue)</h3>
+          <div class="grid grid-cols-11 gap-2">
+            <div class="bg-primary-50 p-4 rounded text-center text-xs">50</div>
+            <div class="bg-primary-100 p-4 rounded text-center text-xs">100</div>
+            <div class="bg-primary-200 p-4 rounded text-center text-xs">200</div>
+            <div class="bg-primary-300 p-4 rounded text-center text-xs">300</div>
+            <div class="bg-primary-400 p-4 rounded text-center text-xs">400</div>
+            <div class="bg-primary-500 p-4 rounded text-center text-xs text-white">500</div>
+            <div class="bg-primary-600 p-4 rounded text-center text-xs text-white">600</div>
+            <div class="bg-primary-700 p-4 rounded text-center text-xs text-white">700</div>
+            <div class="bg-primary-800 p-4 rounded text-center text-xs text-white">800</div>
+            <div class="bg-primary-900 p-4 rounded text-center text-xs text-white">900</div>
+            <div class="bg-primary-950 p-4 rounded text-center text-xs text-white">950</div>
+          </div>
+        </div>
+
+        <!-- Semantic Colors -->
+        <div>
+          <h3 class="text-xl font-semibold mb-4">Semantic Colors</h3>
+          <div class="grid grid-cols-4 gap-4">
+            <div class="bg-success-500 text-white p-4 rounded text-center font-medium">Success</div>
+            <div class="bg-warning-500 text-white p-4 rounded text-center font-medium">Warning</div>
+            <div class="bg-error-500 text-white p-4 rounded text-center font-medium">Error</div>
+            <div class="bg-info-500 text-white p-4 rounded text-center font-medium">Info</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Typography Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Typography</h2>
+
+      <div class="space-y-4 card">
+        <h1>Heading 1 - The quick brown fox</h1>
+        <h2>Heading 2 - The quick brown fox</h2>
+        <h3>Heading 3 - The quick brown fox</h3>
+        <h4>Heading 4 - The quick brown fox</h4>
+        <h5>Heading 5 - The quick brown fox</h5>
+        <h6>Heading 6 - The quick brown fox</h6>
+        <p class="text-base leading-relaxed">
+          Body text (base): Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+          Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        </p>
+        <p class="text-sm text-gray-600">
+          Small text: Used for captions, helper text, and secondary information.
+        </p>
+        <code class="code-inline">const code = "monospace font";</code>
+      </div>
+    </section>
+
+    <!-- Buttons Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Buttons</h2>
+
+      <div class="space-y-8">
+        <!-- Button Variants -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">Variants</h3>
+          <div class="flex flex-wrap gap-3">
+            <button class="btn btn-primary">Primary</button>
+            <button class="btn btn-accent">Accent</button>
+            <button class="btn btn-success">Success</button>
+            <button class="btn btn-warning">Warning</button>
+            <button class="btn btn-error">Error</button>
+            <button class="btn btn-outline">Outline</button>
+            <button class="btn btn-ghost">Ghost</button>
+            <button class="btn btn-link">Link</button>
+          </div>
+        </div>
+
+        <!-- Button Sizes -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">Sizes</h3>
+          <div class="flex flex-wrap items-center gap-3">
+            <button class="btn btn-primary btn-xs">Extra Small</button>
+            <button class="btn btn-primary btn-sm">Small</button>
+            <button class="btn btn-primary">Default</button>
+            <button class="btn btn-primary btn-lg">Large</button>
+            <button class="btn btn-primary btn-xl">Extra Large</button>
+          </div>
+        </div>
+
+        <!-- Button States -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">States</h3>
+          <div class="flex flex-wrap gap-3">
+            <button class="btn btn-primary">Normal</button>
+            <button class="btn btn-primary" disabled>Disabled</button>
+            <button class="btn btn-primary">
+              <span class="spinner"></span>
+              Loading
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Badges Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Badges</h2>
+
+      <div class="space-y-6">
+        <!-- Semantic Badges -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">Semantic</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge-success">Success</span>
+            <span class="badge-warning">Warning</span>
+            <span class="badge-error">Error</span>
+            <span class="badge-info">Info</span>
+            <span class="badge-primary">Primary</span>
+          </div>
+        </div>
+
+        <!-- Difficulty Badges -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">Problem Difficulty</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge-difficulty-easy">Easy</span>
+            <span class="badge-difficulty-medium">Medium</span>
+            <span class="badge-difficulty-hard">Hard</span>
+          </div>
+        </div>
+
+        <!-- Status Badges -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">Submission Status</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge-status-ac">Accepted</span>
+            <span class="badge-status-wa">Wrong Answer</span>
+            <span class="badge-status-tle">Time Limit</span>
+            <span class="badge-status-pending">Pending</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cards Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Cards</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Basic Card -->
+        <div class="card">
+          <h3 class="card-title">Basic Card</h3>
+          <p class="card-subtitle">With title and subtitle</p>
+          <p class="text-gray-700">This is a basic card with default shadow and padding.</p>
+        </div>
+
+        <!-- Bordered Card -->
+        <div class="card card-bordered">
+          <h3 class="card-title">Bordered Card</h3>
+          <p class="text-gray-700">This card has a border instead of just shadow.</p>
+        </div>
+
+        <!-- Interactive Card -->
+        <div class="card card-interactive">
+          <h3 class="card-title">Interactive Card</h3>
+          <p class="text-gray-700">Hover me! I have hover effects.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Forms Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Forms</h2>
+
+      <div class="card max-w-2xl">
+        <form class="space-y-4">
+          <!-- Text Input -->
+          <div>
+            <label class="label">Email Address</label>
+            <input type="email" class="input" placeholder="you@example.com">
+            <p class="form-help">We'll never share your email with anyone else.</p>
+          </div>
+
+          <!-- Input with Error -->
+          <div>
+            <label class="label">Username</label>
+            <input type="text" class="input input-error" value="ab">
+            <p class="form-error">Username must be at least 3 characters.</p>
+          </div>
+
+          <!-- Input with Success -->
+          <div>
+            <label class="label">Password</label>
+            <input type="password" class="input input-success" value="••••••••">
+            <p class="text-sm text-success-600 mt-1">Strong password!</p>
+          </div>
+
+          <!-- Select -->
+          <div>
+            <label class="label">Country</label>
+            <select class="select">
+              <option>United States</option>
+              <option>Vietnam</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <!-- Checkbox -->
+          <div class="flex items-center gap-2">
+            <input type="checkbox" class="checkbox" id="terms">
+            <label for="terms" class="text-sm text-gray-700">I agree to the terms and conditions</label>
+          </div>
+
+          <!-- Radio Buttons -->
+          <div>
+            <label class="label">Notification Preferences</label>
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <input type="radio" class="radio" name="notifications" id="all">
+                <label for="all" class="text-sm text-gray-700">All notifications</label>
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="radio" class="radio" name="notifications" id="important">
+                <label for="important" class="text-sm text-gray-700">Important only</label>
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="radio" class="radio" name="notifications" id="none">
+                <label for="none" class="text-sm text-gray-700">None</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div class="flex gap-3">
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="button" class="btn btn-outline">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Alerts Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Alerts</h2>
+
+      <div class="space-y-4 max-w-2xl">
+        <div class="alert alert-success">
+          <div>
+            <div class="alert-title">Success!</div>
+            <div class="alert-description">Your submission was accepted.</div>
+          </div>
+        </div>
+
+        <div class="alert alert-warning">
+          <div>
+            <div class="alert-title">Warning</div>
+            <div class="alert-description">Your solution exceeded the time limit on test case 5.</div>
+          </div>
+        </div>
+
+        <div class="alert alert-error">
+          <div>
+            <div class="alert-title">Error</div>
+            <div class="alert-description">Failed to compile. Syntax error on line 15.</div>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <div>
+            <div class="alert-title">Info</div>
+            <div class="alert-description">Contest will start in 30 minutes.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tables Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Tables</h2>
+
+      <div class="card overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Problem</th>
+              <th>Difficulty</th>
+              <th>Status</th>
+              <th>Submissions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Two Sum</td>
+              <td><span class="badge-difficulty-easy">Easy</span></td>
+              <td><span class="badge-status-ac">Accepted</span></td>
+              <td>1,234</td>
+            </tr>
+            <tr>
+              <td>Add Two Numbers</td>
+              <td><span class="badge-difficulty-medium">Medium</span></td>
+              <td><span class="badge-status-wa">Wrong Answer</span></td>
+              <td>567</td>
+            </tr>
+            <tr>
+              <td>Longest Substring</td>
+              <td><span class="badge-difficulty-medium">Medium</span></td>
+              <td><span class="badge-status-tle">Time Limit</span></td>
+              <td>891</td>
+            </tr>
+            <tr>
+              <td>Median of Two Sorted Arrays</td>
+              <td><span class="badge-difficulty-hard">Hard</span></td>
+              <td><span class="badge-status-pending">Pending</span></td>
+              <td>234</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Loading States Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Loading States</h2>
+
+      <div class="space-y-6">
+        <!-- Spinners -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">Spinners</h3>
+          <div class="flex items-center gap-4">
+            <div class="spinner"></div>
+            <div class="spinner text-primary-600"></div>
+            <div class="spinner text-success-600"></div>
+            <div class="spinner text-error-600"></div>
+          </div>
+        </div>
+
+        <!-- Skeleton Loaders -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">Skeleton Loaders</h3>
+          <div class="space-y-2">
+            <div class="skeleton-title"></div>
+            <div class="skeleton-text"></div>
+            <div class="skeleton-text"></div>
+            <div class="skeleton-text w-1/2"></div>
+          </div>
+        </div>
+
+        <!-- Progress Bars -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">Progress Bars</h3>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span>Default</span>
+                <span>75%</span>
+              </div>
+              <div class="progress">
+                <div class="progress-bar" style="width: 75%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span>Success</span>
+                <span>100%</span>
+              </div>
+              <div class="progress">
+                <div class="progress-bar progress-bar-success" style="width: 100%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span>Warning</span>
+                <span>50%</span>
+              </div>
+              <div class="progress">
+                <div class="progress-bar progress-bar-warning" style="width: 50%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tabs Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">Tabs</h2>
+
+      <div class="card">
+        <div class="tabs mb-6">
+          <button class="tab active">Description</button>
+          <button class="tab">Submissions</button>
+          <button class="tab">Editorial</button>
+          <button class="tab">Discuss</button>
+        </div>
+        <p class="text-gray-700">Tab content goes here...</p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="mt-16 pt-8 border-t border-gray-200 text-center text-gray-600">
+      <p>LCOJ Design System - Phase 2: Comprehensive Design Foundation</p>
+      <p class="text-sm mt-2">Built with Tailwind CSS v4 + Alpine.js + Vite</p>
+    </footer>
+  </div>
+</body>
+</html>

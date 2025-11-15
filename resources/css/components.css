@@ -1,27 +1,73 @@
 /**
  * Custom Component Styles
  * Component-specific styles that complement Tailwind utilities
+ * LCOJ Design System - Phase 2: Enhanced Components
  */
 
 @layer components {
-  /* Button base styles */
+  /* ========================================
+     BUTTONS
+     ======================================== */
+
   .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  /* Button Variants */
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+    @apply bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 focus:ring-primary-500;
   }
 
-  .btn-secondary {
-    @apply bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500;
+  .btn-accent {
+    @apply bg-accent-600 text-white hover:bg-accent-700 active:bg-accent-800 focus:ring-accent-500;
   }
 
+  .btn-success {
+    @apply bg-success-600 text-white hover:bg-success-700 active:bg-success-800 focus:ring-success-500;
+  }
+
+  .btn-warning {
+    @apply bg-warning-600 text-white hover:bg-warning-700 active:bg-warning-800 focus:ring-warning-500;
+  }
+
+  .btn-error {
+    @apply bg-error-600 text-white hover:bg-error-700 active:bg-error-800 focus:ring-error-500;
+  }
+
+  /* Button Styles */
   .btn-outline {
-    @apply border-2 border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500;
+    @apply border-2 border-gray-300 text-gray-700 bg-transparent hover:bg-gray-50 active:bg-gray-100 focus:ring-gray-500;
   }
 
-  /* Card base styles */
+  .btn-ghost {
+    @apply text-gray-700 bg-transparent hover:bg-gray-100 active:bg-gray-200 focus:ring-gray-500;
+  }
+
+  .btn-link {
+    @apply text-primary-600 bg-transparent hover:text-primary-700 hover:underline focus:ring-0;
+  }
+
+  /* Button Sizes */
+  .btn-xs {
+    @apply px-2 py-1 text-xs;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  .btn-xl {
+    @apply px-8 py-4 text-lg;
+  }
+
+  /* ========================================
+     CARDS
+     ======================================== */
+
   .card {
     @apply bg-white rounded-lg shadow-md p-6 transition-shadow duration-200;
   }
@@ -30,42 +76,391 @@
     @apply shadow-lg;
   }
 
-  /* Input base styles */
+  .card-bordered {
+    @apply border border-gray-200;
+  }
+
+  .card-flat {
+    @apply shadow-none bg-gray-50;
+  }
+
+  .card-interactive {
+    @apply cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300;
+  }
+
+  /* Card Components */
+  .card-header {
+    @apply border-b border-gray-200 pb-4 mb-4;
+  }
+
+  .card-footer {
+    @apply border-t border-gray-200 pt-4 mt-4;
+  }
+
+  .card-title {
+    @apply text-xl font-bold text-gray-900 mb-2;
+  }
+
+  .card-subtitle {
+    @apply text-sm text-gray-600;
+  }
+
+  /* ========================================
+     FORMS
+     ======================================== */
+
   .input {
-    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm;
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm transition-colors duration-200;
   }
 
-  /* Badge styles */
+  .input-error {
+    @apply border-error-500 focus:ring-error-500 focus:border-error-500;
+  }
+
+  .input-success {
+    @apply border-success-500 focus:ring-success-500 focus:border-success-500;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  .form-error {
+    @apply text-sm text-error-600 mt-1;
+  }
+
+  .form-help {
+    @apply text-sm text-gray-500 mt-1;
+  }
+
+  /* Checkbox and Radio */
+  .checkbox,
+  .radio {
+    @apply h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 transition-colors duration-200;
+  }
+
+  .radio {
+    @apply rounded-full;
+  }
+
+  /* Select */
+  .select {
+    @apply input appearance-none bg-white bg-no-repeat bg-right pr-10;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-size: 1.5em 1.5em;
+  }
+
+  /* ========================================
+     BADGES & TAGS
+     ======================================== */
+
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
 
+  /* Semantic Badges */
   .badge-success {
-    @apply bg-success-100 text-success-800;
+    @apply bg-success-100 text-success-800 ring-1 ring-success-200;
   }
 
   .badge-warning {
-    @apply bg-warning-100 text-warning-800;
+    @apply bg-warning-100 text-warning-800 ring-1 ring-warning-200;
   }
 
   .badge-error {
-    @apply bg-error-100 text-error-800;
+    @apply bg-error-100 text-error-800 ring-1 ring-error-200;
   }
 
   .badge-info {
-    @apply bg-info-100 text-info-800;
+    @apply bg-info-100 text-info-800 ring-1 ring-info-200;
   }
 
-  /* Problem difficulty badges */
-  .difficulty-easy {
-    @apply badge bg-green-100 text-green-800;
+  .badge-primary {
+    @apply bg-primary-100 text-primary-800 ring-1 ring-primary-200;
   }
 
-  .difficulty-medium {
-    @apply badge bg-yellow-100 text-yellow-800;
+  /* Difficulty Badges */
+  .badge-difficulty-easy {
+    @apply bg-success-100 text-success-800 ring-1 ring-success-200;
   }
 
-  .difficulty-hard {
-    @apply badge bg-red-100 text-red-800;
+  .badge-difficulty-medium {
+    @apply bg-warning-100 text-warning-800 ring-1 ring-warning-200;
+  }
+
+  .badge-difficulty-hard {
+    @apply bg-error-100 text-error-800 ring-1 ring-error-200;
+  }
+
+  /* Status Badges */
+  .badge-status-ac {
+    @apply bg-success-100 text-success-800 ring-1 ring-success-200;
+  }
+
+  .badge-status-wa {
+    @apply bg-error-100 text-error-800 ring-1 ring-error-200;
+  }
+
+  .badge-status-tle {
+    @apply bg-warning-100 text-warning-800 ring-1 ring-warning-200;
+  }
+
+  .badge-status-pending {
+    @apply bg-gray-100 text-gray-800 ring-1 ring-gray-200 animate-pulse;
+  }
+
+  /* Tag (removable badge) */
+  .tag {
+    @apply badge pr-1 cursor-pointer hover:bg-opacity-80 transition-colors;
+  }
+
+  /* ========================================
+     ALERTS & NOTIFICATIONS
+     ======================================== */
+
+  .alert {
+    @apply p-4 rounded-lg border flex items-start gap-3;
+  }
+
+  .alert-success {
+    @apply bg-success-50 border-success-200 text-success-900;
+  }
+
+  .alert-warning {
+    @apply bg-warning-50 border-warning-200 text-warning-900;
+  }
+
+  .alert-error {
+    @apply bg-error-50 border-error-200 text-error-900;
+  }
+
+  .alert-info {
+    @apply bg-info-50 border-info-200 text-info-900;
+  }
+
+  .alert-title {
+    @apply font-semibold mb-1;
+  }
+
+  .alert-description {
+    @apply text-sm opacity-90;
+  }
+
+  /* ========================================
+     TABLES
+     ======================================== */
+
+  .table {
+    @apply w-full text-sm text-left;
+  }
+
+  .table thead {
+    @apply bg-gray-50 border-b-2 border-gray-200;
+  }
+
+  .table th {
+    @apply px-4 py-3 font-semibold text-gray-700 uppercase tracking-wider;
+  }
+
+  .table td {
+    @apply px-4 py-3 border-b border-gray-200;
+  }
+
+  .table tbody tr:hover {
+    @apply bg-gray-50;
+  }
+
+  .table-striped tbody tr:nth-child(even) {
+    @apply bg-gray-50;
+  }
+
+  .table-compact th,
+  .table-compact td {
+    @apply px-3 py-2;
+  }
+
+  /* ========================================
+     PAGINATION
+     ======================================== */
+
+  .pagination {
+    @apply flex items-center gap-1;
+  }
+
+  .pagination-item {
+    @apply inline-flex items-center justify-center w-10 h-10 text-sm font-medium rounded-md transition-colors duration-200;
+  }
+
+  .pagination-item:not(.active):not(:disabled) {
+    @apply text-gray-700 hover:bg-gray-100;
+  }
+
+  .pagination-item.active {
+    @apply bg-primary-600 text-white;
+  }
+
+  .pagination-item:disabled {
+    @apply text-gray-400 cursor-not-allowed;
+  }
+
+  /* ========================================
+     BREADCRUMBS
+     ======================================== */
+
+  .breadcrumb {
+    @apply flex items-center gap-2 text-sm;
+  }
+
+  .breadcrumb-item {
+    @apply flex items-center gap-2 text-gray-600;
+  }
+
+  .breadcrumb-item.active {
+    @apply text-gray-900 font-medium;
+  }
+
+  .breadcrumb-separator {
+    @apply text-gray-400;
+  }
+
+  /* ========================================
+     LOADING STATES
+     ======================================== */
+
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+
+  .skeleton-text {
+    @apply skeleton h-4 mb-2;
+  }
+
+  .skeleton-title {
+    @apply skeleton h-6 mb-3 w-3/4;
+  }
+
+  .skeleton-circle {
+    @apply skeleton rounded-full;
+  }
+
+  .spinner {
+    @apply inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin;
+  }
+
+  /* ========================================
+     TABS
+     ======================================== */
+
+  .tabs {
+    @apply flex border-b border-gray-200;
+  }
+
+  .tab {
+    @apply px-4 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent transition-colors duration-200 cursor-pointer hover:text-gray-900 hover:border-gray-300;
+  }
+
+  .tab.active {
+    @apply text-primary-600 border-primary-600;
+  }
+
+  /* ========================================
+     TOOLTIPS
+     ======================================== */
+
+  .tooltip {
+    @apply absolute z-50 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded shadow-lg;
+  }
+
+  /* ========================================
+     MODALS & DIALOGS
+     ======================================== */
+
+  .modal-backdrop {
+    @apply fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300;
+  }
+
+  .modal {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto;
+  }
+
+  .modal-header {
+    @apply px-6 py-4 border-b border-gray-200;
+  }
+
+  .modal-title {
+    @apply text-xl font-bold text-gray-900;
+  }
+
+  .modal-body {
+    @apply px-6 py-4;
+  }
+
+  .modal-footer {
+    @apply px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3;
+  }
+
+  /* ========================================
+     DROPDOWN
+     ======================================== */
+
+  .dropdown {
+    @apply relative inline-block;
+  }
+
+  .dropdown-menu {
+    @apply absolute z-50 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5;
+  }
+
+  .dropdown-item {
+    @apply block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 cursor-pointer;
+  }
+
+  .dropdown-item.active {
+    @apply bg-primary-50 text-primary-900;
+  }
+
+  .dropdown-divider {
+    @apply h-px bg-gray-200 my-1;
+  }
+
+  /* ========================================
+     CODE BLOCKS
+     ======================================== */
+
+  .code-block {
+    @apply bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto;
+  }
+
+  .code-inline {
+    @apply bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  /* ========================================
+     PROGRESS BARS
+     ======================================== */
+
+  .progress {
+    @apply w-full bg-gray-200 rounded-full h-2 overflow-hidden;
+  }
+
+  .progress-bar {
+    @apply h-full bg-primary-600 transition-all duration-300;
+  }
+
+  .progress-bar-success {
+    @apply bg-success-600;
+  }
+
+  .progress-bar-warning {
+    @apply bg-warning-600;
+  }
+
+  .progress-bar-error {
+    @apply bg-error-600;
   }
 }
