@@ -1,0 +1,63 @@
+{#
+  Vite Asset Helper Template
+  Provides macros for loading Vite assets in Django templates
+
+  Usage in templates:
+    {% import "vite-assets.html" as vite %}
+    {{ vite.css('main') }}
+    {{ vite.js('main') }}
+#}
+
+{% macro vite_dev_server() %}
+  {# Check if Vite dev server is running (development mode) #}
+  {% if VITE_DEV_MODE %}
+    {# Vite client for HMR #}
+    <script type="module" src="http://localhost:5173/@vite/client"></script>
+  {% endif %}
+{% endmacro %}
+
+{% macro css(entry_name) %}
+  {% if VITE_DEV_MODE %}
+    {# In development, Vite injects CSS automatically via JS #}
+    {# No need to include CSS separately #}
+  {% else %}
+    {# In production, load from manifest #}
+    {% set manifest = VITE_MANIFEST %}
+    {% if manifest and entry_name in manifest %}
+      {% set entry = manifest[entry_name] %}
+      {% if entry.css %}
+        {% for css_file in entry.css %}
+          <link rel="stylesheet" href="{{ STATIC_URL }}dist/{{ css_file }}">
+        {% endfor %}
+      {% endif %}
+    {% endif %}
+  {% endif %}
+{% endmacro %}
+
+{% macro js(entry_name) %}
+  {% if VITE_DEV_MODE %}
+    {# In development, load directly from Vite dev server #}
+    <script type="module" src="http://localhost:5173/{{ entry_name }}"></script>
+  {% else %}
+    {# In production, load from manifest #}
+    {% set manifest = VITE_MANIFEST %}
+    {% if manifest and entry_name in manifest %}
+      {% set entry = manifest[entry_name] %}
+      <script type="module" src="{{ STATIC_URL }}dist/{{ entry.file }}"></script>
+    {% endif %}
+  {% endif %}
+{% endmacro %}
+
+{# Complete setup - includes dev server, CSS, and JS #}
+{% macro setup() %}
+  {{ vite_dev_server() }}
+  {% if VITE_DEV_MODE %}
+    {# Load main entry points in development #}
+    <script type="module" src="http://localhost:5173/js/main.js"></script>
+    <script type="module" src="http://localhost:5173/css/main.css"></script>
+  {% else %}
+    {# Load from manifest in production #}
+    {{ css('styles') }}
+    {{ js('main') }}
+  {% endif %}
+{% endmacro %}

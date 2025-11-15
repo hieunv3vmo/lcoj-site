@@ -43,3 +43,8 @@ tmp.sh
 fc_*
 local_urls.py
 celerybeat-schedule.*
+
+# Vite build artifacts
+static/dist/
+.vite/
+vite.config.js.timestamp-*

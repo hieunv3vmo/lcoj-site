@@ -501,6 +501,7 @@ TEMPLATES = [
                 'judge.template_context.math_setting',
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
+                'dmoj.context_processors.vite_assets',
             ],
             'autoescape': select_autoescape(['html', 'xml']),
             'trim_blocks': True,
@@ -715,8 +716,21 @@ STATICFILES_FINDERS = (
 )
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'resources'),
+    os.path.join(BASE_DIR, 'static'),
 ]
 STATIC_URL = '/static/'
+
+# Vite configuration for modern frontend build pipeline
+VITE_DEV_MODE = DEBUG  # Use Vite dev server in development
+VITE_DEV_SERVER_URL = 'http://localhost:5173'
+VITE_MANIFEST_PATH = os.path.join(BASE_DIR, 'static', 'dist', '.vite', 'manifest.json')
+
+# Load Vite manifest in production
+VITE_MANIFEST = {}
+if not VITE_DEV_MODE and os.path.exists(VITE_MANIFEST_PATH):
+    import json
+    with open(VITE_MANIFEST_PATH, 'r') as f:
+        VITE_MANIFEST = json.load(f)
 
 # Define a cache
 CACHES = {}
