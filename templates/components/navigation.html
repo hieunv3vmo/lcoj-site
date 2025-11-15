@@ -1,0 +1,192 @@
+{#
+  Navigation Components
+  Navigation bars, breadcrumbs, pagination
+
+  Usage:
+    {% import "components/navigation.html" as nav %}
+    {{ nav.breadcrumbs([('Home', '/'), ('Problems', '/problems')]) }}
+    {{ nav.pagination(current_page, total_pages, '/problems') }}
+#}
+
+{#
+  Breadcrumbs
+
+  Args:
+    items (list): List of tuples (text, href) or strings
+    separator (str): Separator character - default: '/'
+#}
+{% macro breadcrumbs(items, separator='/', class='', **attrs) -%}
+  <nav aria-label="Breadcrumb" class="{{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    <ol class="breadcrumb">
+      {% for item in items %}
+        <li class="breadcrumb-item {{ 'active' if loop.last }}">
+          {% if item is string %}
+            {{ item }}
+          {% else %}
+            {% if not loop.last %}
+              <a href="{{ item[1] }}" class="text-primary-600 hover:text-primary-700 transition-colors">
+                {{ item[0] }}
+              </a>
+            {% else %}
+              {{ item[0] }}
+            {% endif %}
+          {% endif %}
+        </li>
+
+        {% if not loop.last %}
+          <li class="breadcrumb-separator" aria-hidden="true">{{ separator }}</li>
+        {% endif %}
+      {% endfor %}
+    </ol>
+  </nav>
+{%- endmacro %}
+
+{#
+  Pagination
+
+  Args:
+    current_page (int): Current page number
+    total_pages (int): Total number of pages
+    base_url (str): Base URL for page links
+    show_edges (bool): Show first/last page links
+    show_prev_next (bool): Show previous/next buttons
+    max_pages (int): Maximum page links to show
+#}
+{% macro pagination(current_page, total_pages, base_url='', show_edges=true, show_prev_next=true, max_pages=7, class='', **attrs) -%}
+  {% if total_pages > 1 %}
+    <nav aria-label="Pagination" class="{{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+      <div class="pagination">
+        {# Previous button #}
+        {% if show_prev_next %}
+          <a
+            href="{% if current_page > 1 %}{{ base_url }}?page={{ current_page - 1 }}{% else %}#{% endif %}"
+            class="pagination-item {{ 'opacity-50 pointer-events-none' if current_page <= 1 }}"
+            aria-label="Previous page"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </a>
+        {% endif %}
+
+        {# Page numbers #}
+        {% set half_max = (max_pages // 2)|int %}
+        {% set start_page = [1, current_page - half_max]|max %}
+        {% set end_page = [total_pages, start_page + max_pages - 1]|min %}
+        {% set start_page = [1, end_page - max_pages + 1]|max %}
+
+        {# First page + ellipsis #}
+        {% if show_edges and start_page > 1 %}
+          <a href="{{ base_url }}?page=1" class="pagination-item">1</a>
+          {% if start_page > 2 %}
+            <span class="pagination-item">…</span>
+          {% endif %}
+        {% endif %}
+
+        {# Page numbers #}
+        {% for page in range(start_page, end_page + 1) %}
+          <a
+            href="{{ base_url }}?page={{ page }}"
+            class="pagination-item {{ 'active' if page == current_page }}"
+            {% if page == current_page %}aria-current="page"{% endif %}
+          >
+            {{ page }}
+          </a>
+        {% endfor %}
+
+        {# Last page + ellipsis #}
+        {% if show_edges and end_page < total_pages %}
+          {% if end_page < total_pages - 1 %}
+            <span class="pagination-item">…</span>
+          {% endif %}
+          <a href="{{ base_url }}?page={{ total_pages }}" class="pagination-item">{{ total_pages }}</a>
+        {% endif %}
+
+        {# Next button #}
+        {% if show_prev_next %}
+          <a
+            href="{% if current_page < total_pages %}{{ base_url }}?page={{ current_page + 1 }}{% else %}#{% endif %}"
+            class="pagination-item {{ 'opacity-50 pointer-events-none' if current_page >= total_pages }}"
+            aria-label="Next page"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        {% endif %}
+      </div>
+    </nav>
+  {% endif %}
+{%- endmacro %}
+
+{#
+  Page Info
+  Shows "Showing X to Y of Z results"
+
+  Args:
+    start (int): Starting item number
+    end (int): Ending item number
+    total (int): Total items
+#}
+{% macro page_info(start, end, total, class='', **attrs) -%}
+  <div class="text-sm text-gray-600 {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    Showing <span class="font-medium">{{ start }}</span> to <span class="font-medium">{{ end }}</span> of <span class="font-medium">{{ total }}</span> results
+  </div>
+{%- endmacro %}
+
+{#
+  Tabs Navigation
+
+  Args:
+    tabs (list): List of tuples (text, href, active)
+    variant (str): Tab variant (underline, pills)
+#}
+{% macro tabs(tabs, variant='underline', class='', **attrs) -%}
+  <div class="tabs {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {% for tab in tabs %}
+      {% if tab is string %}
+        <a href="#" class="tab">{{ tab }}</a>
+      {% else %}
+        <a href="{{ tab[1] }}" class="tab {{ 'active' if tab[2] }}">
+          {{ tab[0] }}
+        </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+{%- endmacro %}
+
+{#
+  Steps Navigation
+  Step-by-step progress indicator
+
+  Args:
+    steps (list): List of tuples (text, completed)
+    current (int): Current step index (0-based)
+#}
+{% macro steps(steps, current=0, class='', **attrs) -%}
+  <nav aria-label="Progress" class="{{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    <ol class="flex items-center">
+      {% for step in steps %}
+        <li class="flex items-center {{ 'flex-1' if not loop.last }}">
+          <div class="flex items-center gap-2">
+            <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ 'bg-primary-600 border-primary-600 text-white' if loop.index0 <= current else 'border-gray-300 text-gray-500' }}">
+              {% if loop.index0 < current %}
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              {% else %}
+                {{ loop.index }}
+              {% endif %}
+            </div>
+            <span class="text-sm font-medium {{ 'text-gray-900' if loop.index0 <= current else 'text-gray-500' }}">
+              {{ step if step is string else step[0] }}
+            </span>
+          </div>
+          {% if not loop.last %}
+            <div class="flex-1 h-0.5 mx-4 {{ 'bg-primary-600' if loop.index0 < current else 'bg-gray-300' }}"></div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </nav>
+{%- endmacro %}

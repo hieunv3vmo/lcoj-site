@@ -1,0 +1,226 @@
+{#
+  Modal & Dialog Components
+  Modal dialogs and overlays (requires Alpine.js)
+
+  Usage:
+    {% import "components/modals.html" as modal %}
+
+    <div x-data="{ open: false }">
+      <button @click="open = true">Open Modal</button>
+
+      {% call modal.base('Modal Title', 'open') %}
+        Modal content here
+      {% endcall %}
+    </div>
+#}
+
+{#
+  Base Modal
+  Generic modal with header, body, and footer
+
+  Args:
+    title (str): Modal title
+    x_show (str): Alpine.js x-show variable name
+    size (str): Modal size (sm, md, lg, xl, full)
+    closeable (bool): Show close button
+#}
+{% macro base(title, x_show='open', size='md', closeable=true, class='', **attrs) -%}
+  {# Backdrop #}
+  <div
+    x-show="{{ x_show }}"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    @click="{{ x_show }} = false"
+    class="modal-backdrop"
+    x-cloak
+  ></div>
+
+  {# Modal #}
+  <div
+    x-show="{{ x_show }}"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 scale-95"
+    x-transition:enter-end="opacity-100 scale-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 scale-100"
+    x-transition:leave-end="opacity-0 scale-95"
+    @keydown.escape.window="{{ x_show }} = false"
+    class="modal"
+    x-cloak
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    <div class="modal-content {{ 'max-w-' + size if size != 'full' else 'max-w-full h-full' }} {{ class }}" @click.stop>
+      {# Header #}
+      <div class="modal-header">
+        <h3 class="modal-title">{{ title }}</h3>
+        {% if closeable %}
+          <button
+            type="button"
+            @click="{{ x_show }} = false"
+            class="text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Close"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        {% endif %}
+      </div>
+
+      {# Body #}
+      <div class="modal-body">
+        {{ caller() }}
+      </div>
+    </div>
+  </div>
+{%- endmacro %}
+
+{#
+  Confirmation Dialog
+  Simple yes/no confirmation modal
+
+  Args:
+    title (str): Dialog title
+    message (str): Confirmation message
+    x_show (str): Alpine.js x-show variable
+    confirm_text (str): Confirm button text
+    cancel_text (str): Cancel button text
+    confirm_action (str): Action on confirm (Alpine.js expression)
+    variant (str): Confirm button variant (primary, error)
+#}
+{% macro confirm(title, message, x_show='confirmOpen', confirm_text='Confirm', cancel_text='Cancel', confirm_action='', variant='primary', class='', **attrs) -%}
+  {% import "components/buttons.html" as btn %}
+
+  {# Backdrop #}
+  <div
+    x-show="{{ x_show }}"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    @click="{{ x_show }} = false"
+    class="modal-backdrop"
+    x-cloak
+  ></div>
+
+  {# Modal #}
+  <div
+    x-show="{{ x_show }}"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 scale-95"
+    x-transition:enter-end="opacity-100 scale-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 scale-100"
+    x-transition:leave-end="opacity-0 scale-95"
+    @keydown.escape.window="{{ x_show }} = false"
+    class="modal"
+    x-cloak
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    <div class="modal-content max-w-md {{ class }}" @click.stop>
+      <div class="modal-header">
+        <h3 class="modal-title">{{ title }}</h3>
+      </div>
+
+      <div class="modal-body">
+        <p class="text-gray-700">{{ message }}</p>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          @click="{{ x_show }} = false"
+          class="btn btn-outline"
+        >
+          {{ cancel_text }}
+        </button>
+        <button
+          type="button"
+          @click="{{ confirm_action }}; {{ x_show }} = false"
+          class="btn btn-{{ variant }}"
+        >
+          {{ confirm_text }}
+        </button>
+      </div>
+    </div>
+  </div>
+{%- endmacro %}
+
+{#
+  Form Modal
+  Modal with form content
+
+  Args:
+    title (str): Modal title
+    x_show (str): Alpine.js x-show variable
+    form_action (str): Form action URL
+    form_method (str): Form method (post, get)
+    submit_text (str): Submit button text
+#}
+{% macro form_modal(title, x_show='formOpen', form_action='', form_method='post', submit_text='Submit', class='', **attrs) -%}
+  {# Backdrop #}
+  <div
+    x-show="{{ x_show }}"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    @click="{{ x_show }} = false"
+    class="modal-backdrop"
+    x-cloak
+  ></div>
+
+  {# Modal #}
+  <div
+    x-show="{{ x_show }}"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 scale-95"
+    x-transition:enter-end="opacity-100 scale-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 scale-100"
+    x-transition:leave-end="opacity-0 scale-95"
+    @keydown.escape.window="{{ x_show }} = false"
+    class="modal"
+    x-cloak
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    <div class="modal-content {{ class }}" @click.stop>
+      <form action="{{ form_action }}" method="{{ form_method }}">
+        <div class="modal-header">
+          <h3 class="modal-title">{{ title }}</h3>
+          <button
+            type="button"
+            @click="{{ x_show }} = false"
+            class="text-gray-400 hover:text-gray-600"
+            aria-label="Close"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          {{ caller() }}
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" @click="{{ x_show }} = false" class="btn btn-outline">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            {{ submit_text }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{%- endmacro %}

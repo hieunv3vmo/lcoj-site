@@ -1,0 +1,321 @@
+{#
+  Form Components
+  Form inputs, selects, and validation
+
+  Usage:
+    {% import "components/forms.html" as form %}
+    {{ form.input('email', 'Email Address', type='email') }}
+    {{ form.select('country', 'Country', options=[...]) }}
+#}
+
+{#
+  Text Input
+
+  Args:
+    name (str): Input name attribute
+    label (str): Input label
+    type (str): Input type (text, email, password, number, etc.)
+    value (str): Input value
+    placeholder (str): Placeholder text
+    help_text (str): Helper text below input
+    error (str): Error message
+    required (bool): Required field
+    disabled (bool): Disabled state
+#}
+{% macro input(name, label='', type='text', value='', placeholder='', help_text='', error='', required=false, disabled=false, class='', **attrs) -%}
+  <div class="{{ class }}">
+    {% if label %}
+      <label for="{{ name }}" class="label">
+        {{ label }}
+        {% if required %}<span class="text-error-600">*</span>{% endif %}
+      </label>
+    {% endif %}
+
+    <input
+      type="{{ type }}"
+      id="{{ name }}"
+      name="{{ name }}"
+      class="input {{ 'input-error' if error }}"
+      {% if value %}value="{{ value }}"{% endif %}
+      {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+      {% if required %}required{% endif %}
+      {% if disabled %}disabled{% endif %}
+      {% for key, val in attrs.items() %}{{ key }}="{{ val }}" {% endfor %}
+    >
+
+    {% if error %}
+      <p class="form-error">{{ error }}</p>
+    {% elif help_text %}
+      <p class="form-help">{{ help_text }}</p>
+    {% endif %}
+  </div>
+{%- endmacro %}
+
+{#
+  Textarea
+
+  Args:
+    name (str): Textarea name
+    label (str): Label text
+    value (str): Textarea value
+    rows (int): Number of rows
+    placeholder (str): Placeholder text
+    help_text (str): Helper text
+    error (str): Error message
+    required (bool): Required field
+#}
+{% macro textarea(name, label='', value='', rows=4, placeholder='', help_text='', error='', required=false, class='', **attrs) -%}
+  <div class="{{ class }}">
+    {% if label %}
+      <label for="{{ name }}" class="label">
+        {{ label }}
+        {% if required %}<span class="text-error-600">*</span>{% endif %}
+      </label>
+    {% endif %}
+
+    <textarea
+      id="{{ name }}"
+      name="{{ name }}"
+      rows="{{ rows }}"
+      class="input {{ 'input-error' if error }}"
+      {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+      {% if required %}required{% endif %}
+      {% for key, val in attrs.items() %}{{ key }}="{{ val }}" {% endfor %}
+    >{{ value }}</textarea>
+
+    {% if error %}
+      <p class="form-error">{{ error }}</p>
+    {% elif help_text %}
+      <p class="form-help">{{ help_text }}</p>
+    {% endif %}
+  </div>
+{%- endmacro %}
+
+{#
+  Select Dropdown
+
+  Args:
+    name (str): Select name
+    label (str): Label text
+    options (list): List of tuples (value, text) or list of strings
+    selected (str): Selected value
+    placeholder (str): Placeholder option text
+    help_text (str): Helper text
+    error (str): Error message
+    required (bool): Required field
+#}
+{% macro select(name, label='', options=[], selected='', placeholder='', help_text='', error='', required=false, class='', **attrs) -%}
+  <div class="{{ class }}">
+    {% if label %}
+      <label for="{{ name }}" class="label">
+        {{ label }}
+        {% if required %}<span class="text-error-600">*</span>{% endif %}
+      </label>
+    {% endif %}
+
+    <select
+      id="{{ name }}"
+      name="{{ name }}"
+      class="select {{ 'input-error' if error }}"
+      {% if required %}required{% endif %}
+      {% for key, val in attrs.items() %}{{ key }}="{{ val }}" {% endfor %}
+    >
+      {% if placeholder %}
+        <option value="">{{ placeholder }}</option>
+      {% endif %}
+
+      {% for option in options %}
+        {% if option is string %}
+          <option value="{{ option }}" {% if option == selected %}selected{% endif %}>{{ option }}</option>
+        {% else %}
+          <option value="{{ option[0] }}" {% if option[0] == selected %}selected{% endif %}>{{ option[1] }}</option>
+        {% endif %}
+      {% endfor %}
+    </select>
+
+    {% if error %}
+      <p class="form-error">{{ error }}</p>
+    {% elif help_text %}
+      <p class="form-help">{{ help_text }}</p>
+    {% endif %}
+  </div>
+{%- endmacro %}
+
+{#
+  Checkbox
+
+  Args:
+    name (str): Checkbox name
+    label (str): Label text
+    value (str): Checkbox value
+    checked (bool): Checked state
+    help_text (str): Helper text
+#}
+{% macro checkbox(name, label, value='1', checked=false, help_text='', class='', **attrs) -%}
+  <div class="{{ class }}">
+    <div class="flex items-start gap-2">
+      <input
+        type="checkbox"
+        id="{{ name }}"
+        name="{{ name }}"
+        value="{{ value }}"
+        class="checkbox mt-0.5"
+        {% if checked %}checked{% endif %}
+        {% for key, val in attrs.items() %}{{ key }}="{{ val }}" {% endfor %}
+      >
+      <div class="flex-1">
+        <label for="{{ name }}" class="text-sm text-gray-700 cursor-pointer">
+          {{ label }}
+        </label>
+        {% if help_text %}
+          <p class="form-help mt-0">{{ help_text }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{%- endmacro %}
+
+{#
+  Radio Button
+
+  Args:
+    name (str): Radio name (same for group)
+    value (str): Radio value
+    label (str): Label text
+    checked (bool): Checked state
+#}
+{% macro radio(name, value, label, checked=false, class='', **attrs) -%}
+  <div class="flex items-center gap-2 {{ class }}">
+    <input
+      type="radio"
+      id="{{ name }}_{{ value }}"
+      name="{{ name }}"
+      value="{{ value }}"
+      class="radio"
+      {% if checked %}checked{% endif %}
+      {% for key, val in attrs.items() %}{{ key }}="{{ val }}" {% endfor %}
+    >
+    <label for="{{ name }}_{{ value }}" class="text-sm text-gray-700 cursor-pointer">
+      {{ label }}
+    </label>
+  </div>
+{%- endmacro %}
+
+{#
+  Radio Group
+  Multiple radio buttons
+
+  Args:
+    name (str): Radio group name
+    label (str): Group label
+    options (list): List of tuples (value, label) or list of strings
+    selected (str): Selected value
+    inline (bool): Display inline vs stacked
+#}
+{% macro radio_group(name, label='', options=[], selected='', inline=false, class='', **attrs) -%}
+  <div class="{{ class }}">
+    {% if label %}
+      <label class="label">{{ label }}</label>
+    {% endif %}
+
+    <div class="{{ 'flex flex-wrap gap-4' if inline else 'space-y-2' }}">
+      {% for option in options %}
+        {% if option is string %}
+          {{ radio(name, option, option, checked=(option == selected)) }}
+        {% else %}
+          {{ radio(name, option[0], option[1], checked=(option[0] == selected)) }}
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+{%- endmacro %}
+
+{#
+  Form Group
+  Wrapper for multiple related inputs
+
+  Args:
+    legend (str): Fieldset legend
+#}
+{% macro group(legend='', class='', **attrs) -%}
+  <fieldset class="space-y-4 {{ class }}" {% for key, val in attrs.items() %}{{ key }}="{{ val }}" {% endfor %}>
+    {% if legend %}
+      <legend class="text-lg font-semibold text-gray-900 mb-4">{{ legend }}</legend>
+    {% endif %}
+    {{ caller() }}
+  </fieldset>
+{%- endmacro %}
+
+{#
+  File Upload
+
+  Args:
+    name (str): Input name
+    label (str): Label text
+    accept (str): Accepted file types
+    help_text (str): Helper text
+    error (str): Error message
+    required (bool): Required field
+    multiple (bool): Allow multiple files
+#}
+{% macro file(name, label='', accept='', help_text='', error='', required=false, multiple=false, class='', **attrs) -%}
+  <div class="{{ class }}">
+    {% if label %}
+      <label for="{{ name }}" class="label">
+        {{ label }}
+        {% if required %}<span class="text-error-600">*</span>{% endif %}
+      </label>
+    {% endif %}
+
+    <input
+      type="file"
+      id="{{ name }}"
+      name="{{ name }}"
+      class="block w-full text-sm text-gray-600
+             file:mr-4 file:py-2 file:px-4
+             file:rounded-lg file:border-0
+             file:text-sm file:font-medium
+             file:bg-primary-50 file:text-primary-700
+             hover:file:bg-primary-100
+             cursor-pointer"
+      {% if accept %}accept="{{ accept }}"{% endif %}
+      {% if required %}required{% endif %}
+      {% if multiple %}multiple{% endif %}
+      {% for key, val in attrs.items() %}{{ key }}="{{ val }}" {% endfor %}
+    >
+
+    {% if error %}
+      <p class="form-error">{{ error }}</p>
+    {% elif help_text %}
+      <p class="form-help">{{ help_text }}</p>
+    {% endif %}
+  </div>
+{%- endmacro %}
+
+{#
+  Search Input
+  Input with search icon
+
+  Args:
+    name (str): Input name
+    placeholder (str): Placeholder text
+    value (str): Initial value
+#}
+{% macro search(name, placeholder='Search...', value='', class='', **attrs) -%}
+  <div class="relative {{ class }}">
+    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+    </div>
+    <input
+      type="search"
+      id="{{ name }}"
+      name="{{ name }}"
+      class="input pl-10"
+      placeholder="{{ placeholder }}"
+      {% if value %}value="{{ value }}"{% endif %}
+      {% for key, val in attrs.items() %}{{ key }}="{{ val }}" {% endfor %}
+    >
+  </div>
+{%- endmacro %}

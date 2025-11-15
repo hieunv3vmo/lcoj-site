@@ -1,0 +1,171 @@
+{#
+  Button Components
+  Reusable button macros with various styles and states
+
+  Usage:
+    {% import "components/buttons.html" as btn %}
+    {{ btn.primary('Submit', type='submit') }}
+    {{ btn.outline('Cancel', onclick='closeModal()') }}
+#}
+
+{#
+  Primary Button
+
+  Args:
+    text (str): Button text
+    type (str): Button type (button, submit, reset) - default: button
+    size (str): Button size (xs, sm, lg, xl) - default: normal
+    disabled (bool): Disabled state - default: false
+    loading (bool): Loading state - default: false
+    icon (str): Optional icon HTML
+    class (str): Additional CSS classes
+    **attrs: Additional HTML attributes
+#}
+{% macro primary(text, type='button', size='', disabled=false, loading=false, icon='', class='', **attrs) -%}
+  <button
+    type="{{ type }}"
+    class="btn btn-primary {{ 'btn-' + size if size }} {{ class }}"
+    {% if disabled or loading %}disabled{% endif %}
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    {% if loading %}
+      <span class="spinner"></span>
+    {% endif %}
+    {% if icon %}{{ icon|safe }}{% endif %}
+    {{ text }}
+  </button>
+{%- endmacro %}
+
+{# Accent Button #}
+{% macro accent(text, type='button', size='', disabled=false, loading=false, icon='', class='', **attrs) -%}
+  <button
+    type="{{ type }}"
+    class="btn btn-accent {{ 'btn-' + size if size }} {{ class }}"
+    {% if disabled or loading %}disabled{% endif %}
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    {% if loading %}<span class="spinner"></span>{% endif %}
+    {% if icon %}{{ icon|safe }}{% endif %}
+    {{ text }}
+  </button>
+{%- endmacro %}
+
+{# Success Button #}
+{% macro success(text, type='button', size='', disabled=false, loading=false, icon='', class='', **attrs) -%}
+  <button
+    type="{{ type }}"
+    class="btn btn-success {{ 'btn-' + size if size }} {{ class }}"
+    {% if disabled or loading %}disabled{% endif %}
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    {% if loading %}<span class="spinner"></span>{% endif %}
+    {% if icon %}{{ icon|safe }}{% endif %}
+    {{ text }}
+  </button>
+{%- endmacro %}
+
+{# Warning Button #}
+{% macro warning(text, type='button', size='', disabled=false, loading=false, icon='', class='', **attrs) -%}
+  <button
+    type="{{ type }}"
+    class="btn btn-warning {{ 'btn-' + size if size }} {{ class }}"
+    {% if disabled or loading %}disabled{% endif %}
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    {% if loading %}<span class="spinner"></span>{% endif %}
+    {% if icon %}{{ icon|safe }}{% endif %}
+    {{ text }}
+  </button>
+{%- endmacro %}
+
+{# Error/Danger Button #}
+{% macro error(text, type='button', size='', disabled=false, loading=false, icon='', class='', **attrs) -%}
+  <button
+    type="{{ type }}"
+    class="btn btn-error {{ 'btn-' + size if size }} {{ class }}"
+    {% if disabled or loading %}disabled{% endif %}
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    {% if loading %}<span class="spinner"></span>{% endif %}
+    {% if icon %}{{ icon|safe }}{% endif %}
+    {{ text }}
+  </button>
+{%- endmacro %}
+
+{# Outline Button #}
+{% macro outline(text, type='button', size='', disabled=false, loading=false, icon='', class='', **attrs) -%}
+  <button
+    type="{{ type }}"
+    class="btn btn-outline {{ 'btn-' + size if size }} {{ class }}"
+    {% if disabled or loading %}disabled{% endif %}
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    {% if loading %}<span class="spinner"></span>{% endif %}
+    {% if icon %}{{ icon|safe }}{% endif %}
+    {{ text }}
+  </button>
+{%- endmacro %}
+
+{# Ghost Button #}
+{% macro ghost(text, type='button', size='', disabled=false, loading=false, icon='', class='', **attrs) -%}
+  <button
+    type="{{ type }}"
+    class="btn btn-ghost {{ 'btn-' + size if size }} {{ class }}"
+    {% if disabled or loading %}disabled{% endif %}
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    {% if loading %}<span class="spinner"></span>{% endif %}
+    {% if icon %}{{ icon|safe }}{% endif %}
+    {{ text }}
+  </button>
+{%- endmacro %}
+
+{# Link Button #}
+{% macro link(text, href='#', size='', disabled=false, icon='', class='', **attrs) -%}
+  <a
+    href="{{ href }}"
+    class="btn btn-link {{ 'btn-' + size if size }} {{ class }}"
+    {% if disabled %}aria-disabled="true" style="pointer-events: none; opacity: 0.5;"{% endif %}
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    {% if icon %}{{ icon|safe }}{% endif %}
+    {{ text }}
+  </a>
+{%- endmacro %}
+
+{#
+  Button Group
+  Group buttons together with proper spacing
+
+  Usage:
+    {% call btn.group() %}
+      {{ btn.primary('Save') }}
+      {{ btn.outline('Cancel') }}
+    {% endcall %}
+#}
+{% macro group(class='') -%}
+  <div class="flex gap-2 {{ class }}">
+    {{ caller() }}
+  </div>
+{%- endmacro %}
+
+{#
+  Icon Button
+  Button with only an icon, no text
+
+  Args:
+    icon (str): Icon HTML or SVG
+    variant (str): Button variant (primary, outline, ghost, etc.)
+    size (str): Button size
+    aria_label (str): Accessible label (required)
+#}
+{% macro icon_button(icon, variant='ghost', size='', aria_label='', class='', **attrs) -%}
+  <button
+    type="button"
+    class="btn btn-{{ variant }} {{ 'btn-' + size if size }} !p-2 {{ class }}"
+    aria-label="{{ aria_label }}"
+    {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}
+  >
+    {{ icon|safe }}
+  </button>
+{%- endmacro %}

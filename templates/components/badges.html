@@ -1,0 +1,189 @@
+{#
+  Badge & Tag Components
+  Small labels and indicators
+
+  Usage:
+    {% import "components/badges.html" as badge %}
+    {{ badge.success('Accepted') }}
+    {{ badge.difficulty('Easy') }}
+    {{ badge.status('AC') }}
+#}
+
+{# Base Badge #}
+{% macro base(text, class='', **attrs) -%}
+  <span class="badge {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ text }}
+  </span>
+{%- endmacro %}
+
+{# Semantic Badges #}
+{% macro success(text, class='', **attrs) -%}
+  <span class="badge-success {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ text }}
+  </span>
+{%- endmacro %}
+
+{% macro warning(text, class='', **attrs) -%}
+  <span class="badge-warning {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ text }}
+  </span>
+{%- endmacro %}
+
+{% macro error(text, class='', **attrs) -%}
+  <span class="badge-error {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ text }}
+  </span>
+{%- endmacro %}
+
+{% macro info(text, class='', **attrs) -%}
+  <span class="badge-info {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ text }}
+  </span>
+{%- endmacro %}
+
+{% macro primary(text, class='', **attrs) -%}
+  <span class="badge-primary {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ text }}
+  </span>
+{%- endmacro %}
+
+{#
+  Difficulty Badge
+  For problem difficulty levels
+
+  Args:
+    level (str): 'easy', 'medium', or 'hard'
+    text (str): Optional custom text - defaults to capitalized level
+#}
+{% macro difficulty(level, text='', class='', **attrs) -%}
+  {% set level_lower = level|lower %}
+  {% set display_text = text if text else level|capitalize %}
+  <span class="badge-difficulty-{{ level_lower }} {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ display_text }}
+  </span>
+{%- endmacro %}
+
+{#
+  Submission Status Badge
+  For submission verdicts
+
+  Args:
+    status (str): Status code (AC, WA, TLE, MLE, RE, CE, PENDING, etc.)
+    text (str): Optional display text
+#}
+{% macro status(status_code, text='', class='', **attrs) -%}
+  {% set status_lower = status_code|lower %}
+  {% set status_map = {
+    'ac': 'Accepted',
+    'wa': 'Wrong Answer',
+    'tle': 'Time Limit',
+    'mle': 'Memory Limit',
+    're': 'Runtime Error',
+    'ce': 'Compile Error',
+    'pending': 'Pending',
+    'judging': 'Judging'
+  } %}
+  {% set display_text = text if text else status_map.get(status_lower, status_code) %}
+  <span class="badge-status-{{ status_lower }} {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ display_text }}
+  </span>
+{%- endmacro %}
+
+{#
+  Tag (Removable Badge)
+  Badge with close button
+
+  Args:
+    text (str): Tag text
+    removable (bool): Show remove button - default: true
+    on_remove (str): JavaScript function to call on remove
+#}
+{% macro tag(text, removable=true, on_remove='', class='', **attrs) -%}
+  <span class="tag {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ text }}
+    {% if removable %}
+      <button
+        type="button"
+        class="ml-1 text-current opacity-60 hover:opacity-100 transition-opacity"
+        {% if on_remove %}onclick="{{ on_remove }}"{% endif %}
+        aria-label="Remove {{ text }}"
+      >
+        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    {% endif %}
+  </span>
+{%- endmacro %}
+
+{#
+  Badge with Icon
+  Badge with leading icon
+
+  Args:
+    text (str): Badge text
+    icon (str): Icon HTML/SVG
+    variant (str): Badge variant (success, warning, error, info, primary)
+#}
+{% macro with_icon(text, icon, variant='primary', class='', **attrs) -%}
+  <span class="badge-{{ variant }} {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ icon|safe }}
+    {{ text }}
+  </span>
+{%- endmacro %}
+
+{#
+  Badge with Dot Indicator
+  Badge with colored dot
+
+  Args:
+    text (str): Badge text
+    variant (str): Color variant
+#}
+{% macro with_dot(text, variant='primary', class='', **attrs) -%}
+  <span class="badge-{{ variant }} {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    <span class="w-2 h-2 rounded-full bg-current"></span>
+    {{ text }}
+  </span>
+{%- endmacro %}
+
+{#
+  Count Badge
+  Small numerical indicator (like notification count)
+
+  Args:
+    count (int): Number to display
+    max (int): Maximum number to show (shows "99+" if exceeded)
+#}
+{% macro count(count, max=99, variant='error', class='', **attrs) -%}
+  {% set display = count if count <= max else (max|string + '+') %}
+  <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold text-white bg-{{ variant }}-600 rounded-full {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ display }}
+  </span>
+{%- endmacro %}
+
+{#
+  User Rank Badge
+  Codeforces-style rank indicator
+
+  Args:
+    rank (str): Rank name (newbie, pupil, specialist, expert, master, grandmaster, legendary)
+    text (str): Optional custom text
+#}
+{% macro rank(rank_name, text='', class='', **attrs) -%}
+  {% set rank_lower = rank_name|lower %}
+  {% set display_text = text if text else rank_name|capitalize %}
+  {% set rank_colors = {
+    'newbie': 'bg-gray-100 text-gray-800 ring-1 ring-gray-200',
+    'pupil': 'bg-green-100 text-green-800 ring-1 ring-green-200',
+    'specialist': 'bg-cyan-100 text-cyan-800 ring-1 ring-cyan-200',
+    'expert': 'bg-blue-100 text-blue-800 ring-1 ring-blue-200',
+    'master': 'bg-purple-100 text-purple-800 ring-1 ring-purple-200',
+    'grandmaster': 'bg-red-100 text-red-800 ring-1 ring-red-200',
+    'legendary': 'bg-red-900 text-red-100 ring-1 ring-red-800'
+  } %}
+  {% set color_class = rank_colors.get(rank_lower, rank_colors['newbie']) %}
+  <span class="badge {{ color_class }} {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ display_text }}
+  </span>
+{%- endmacro %}

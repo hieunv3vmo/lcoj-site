@@ -1,0 +1,264 @@
+{#
+  Card Components
+  Container components for content
+
+  Usage:
+    {% import "components/cards.html" as card %}
+
+    {% call card.base() %}
+      Card content here
+    {% endcall %}
+
+    {{ card.problem('Two Sum', 'easy', 1000) }}
+#}
+
+{#
+  Base Card
+  Basic card container with caller content
+
+  Args:
+    variant (str): Card variant (base, bordered, flat, interactive)
+    class (str): Additional CSS classes
+#}
+{% macro base(variant='', class='', **attrs) -%}
+  <div class="card {{ 'card-' + variant if variant }} {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ caller() }}
+  </div>
+{%- endmacro %}
+
+{#
+  Card with Header
+  Card with defined header section
+#}
+{% macro with_header(title, subtitle='', actions='', class='', **attrs) -%}
+  <div class="card {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    <div class="card-header flex items-center justify-between">
+      <div>
+        <h3 class="card-title">{{ title }}</h3>
+        {% if subtitle %}
+          <p class="card-subtitle">{{ subtitle }}</p>
+        {% endif %}
+      </div>
+      {% if actions %}
+        <div>{{ actions|safe }}</div>
+      {% endif %}
+    </div>
+    <div>
+      {{ caller() }}
+    </div>
+  </div>
+{%- endmacro %}
+
+{#
+  Card with Footer
+  Card with defined footer section
+#}
+{% macro with_footer(class='', **attrs) -%}
+  <div class="card {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {{ caller() }}
+  </div>
+{%- endmacro %}
+
+{#
+  Problem Card
+  Card specifically for problem listings
+
+  Args:
+    title (str): Problem title
+    difficulty (str): easy, medium, or hard
+    points (int): Problem points
+    tags (list): List of tag strings
+    solved (bool): Whether user has solved
+    href (str): Link to problem
+#}
+{% macro problem(title, difficulty='medium', points=0, tags=[], solved=false, href='#', class='', **attrs) -%}
+  {% import "components/badges.html" as badge %}
+
+  <a href="{{ href }}" class="card card-interactive {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    <div class="flex items-start justify-between mb-3">
+      <h3 class="text-lg font-semibold text-gray-900 {{ 'line-through text-gray-500' if solved }}">
+        {{ title }}
+      </h3>
+      {{ badge.difficulty(difficulty) }}
+    </div>
+
+    <div class="flex items-center justify-between">
+      <div class="flex flex-wrap gap-2">
+        {% for tag in tags %}
+          <span class="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">{{ tag }}</span>
+        {% endfor %}
+      </div>
+
+      {% if points %}
+        <span class="text-sm font-medium text-gray-700">{{ points }} points</span>
+      {% endif %}
+    </div>
+
+    {% if solved %}
+      <div class="mt-3 flex items-center gap-1 text-success-600 text-sm font-medium">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+        </svg>
+        Solved
+      </div>
+    {% endif %}
+  </a>
+{%- endmacro %}
+
+{#
+  Contest Card
+  Card for contest listings
+
+  Args:
+    title (str): Contest title
+    start_time (str): Start time display
+    duration (str): Duration display
+    participants (int): Number of participants
+    status (str): upcoming, running, or ended
+    href (str): Link to contest
+#}
+{% macro contest(title, start_time, duration, participants=0, status='upcoming', href='#', class='', **attrs) -%}
+  {% import "components/badges.html" as badge %}
+
+  <a href="{{ href }}" class="card card-interactive {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    <div class="flex items-start justify-between mb-3">
+      <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
+      {% if status == 'running' %}
+        {{ badge.success('Live') }}
+      {% elif status == 'upcoming' %}
+        {{ badge.info('Upcoming') }}
+      {% else %}
+        {{ badge.base('Ended', class='bg-gray-100 text-gray-600') }}
+      {% endif %}
+    </div>
+
+    <div class="space-y-2 text-sm text-gray-600">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        {{ start_time }}
+      </div>
+
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ duration }}
+      </div>
+
+      {% if participants %}
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          {{ participants }} participants
+        </div>
+      {% endif %}
+    </div>
+  </a>
+{%- endmacro %}
+
+{#
+  User Card
+  Card for user profiles
+
+  Args:
+    username (str): Username
+    avatar (str): Avatar URL
+    rank (str): User rank
+    rating (int): User rating
+    solved (int): Problems solved
+    href (str): Link to profile
+#}
+{% macro user(username, avatar='', rank='newbie', rating=0, solved=0, href='#', class='', **attrs) -%}
+  {% import "components/badges.html" as badge %}
+
+  <a href="{{ href }}" class="card card-interactive {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    <div class="flex items-center gap-4 mb-4">
+      {% if avatar %}
+        <img src="{{ avatar }}" alt="{{ username }}" class="w-12 h-12 rounded-full">
+      {% else %}
+        <div class="w-12 h-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-lg">
+          {{ username[0]|upper }}
+        </div>
+      {% endif %}
+
+      <div class="flex-1">
+        <h3 class="font-semibold text-gray-900">{{ username }}</h3>
+        {{ badge.rank(rank) }}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 text-center">
+      <div>
+        <div class="text-2xl font-bold text-gray-900">{{ rating }}</div>
+        <div class="text-sm text-gray-600">Rating</div>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-gray-900">{{ solved }}</div>
+        <div class="text-sm text-gray-600">Solved</div>
+      </div>
+    </div>
+  </a>
+{%- endmacro %}
+
+{#
+  Blog Post Card
+  Card for blog/news posts
+
+  Args:
+    title (str): Post title
+    excerpt (str): Post excerpt
+    author (str): Author name
+    date (str): Publication date
+    thumbnail (str): Optional thumbnail URL
+    href (str): Link to post
+#}
+{% macro blog(title, excerpt, author, date, thumbnail='', href='#', class='', **attrs) -%}
+  <a href="{{ href }}" class="card card-interactive {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    {% if thumbnail %}
+      <img src="{{ thumbnail }}" alt="{{ title }}" class="w-full h-48 object-cover rounded-t-lg -mt-6 -mx-6 mb-4">
+    {% endif %}
+
+    <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ title }}</h3>
+    <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ excerpt }}</p>
+
+    <div class="flex items-center justify-between text-sm text-gray-500">
+      <span>{{ author }}</span>
+      <span>{{ date }}</span>
+    </div>
+  </a>
+{%- endmacro %}
+
+{#
+  Stats Card
+  Card displaying a single statistic
+
+  Args:
+    label (str): Stat label
+    value (str|int): Stat value
+    icon (str): Optional icon HTML
+    change (str): Optional change indicator ("+12%", "-5%")
+    trend (str): Trend direction (up, down, neutral)
+#}
+{% macro stat(label, value, icon='', change='', trend='neutral', class='', **attrs) -%}
+  <div class="card {{ class }}" {% for key, value in attrs.items() %}{{ key }}="{{ value }}" {% endfor %}>
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-600 mb-1">{{ label }}</p>
+        <p class="text-3xl font-bold text-gray-900">{{ value }}</p>
+        {% if change %}
+          <p class="text-sm mt-1 {{ 'text-success-600' if trend == 'up' else ('text-error-600' if trend == 'down' else 'text-gray-600') }}">
+            {{ change }}
+          </p>
+        {% endif %}
+      </div>
+      {% if icon %}
+        <div class="text-primary-600 opacity-20">
+          {{ icon|safe }}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{%- endmacro %}
