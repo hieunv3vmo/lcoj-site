@@ -1,0 +1,362 @@
+{% extends "base-modern.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "contest/contest-tabs-modern.html" %}
+{% endblock %}
+
+{% block js_media %}
+    <script type="text/javascript">
+        $(function () {
+            // Install tooltips for start times
+            window.install_tooltips = function () {
+                $('td.user-name').find('> span:first-child').each(function () {
+                    var link = $(this);
+                    link.mouseenter(function (e) {
+                        var start_time = link.siblings('.start-time').text().trim();
+                        link.addClass('tooltipped tooltipped-e').attr('aria-label', start_time);
+                    }).mouseleave(function (e) {
+                        link.removeClass('tooltipped tooltipped-e').removeAttr('aria-label');
+                    });
+                });
+            };
+
+            install_tooltips();
+
+            {% if not contest.ended %}
+                // Auto reload ranking every 10 seconds
+                var ranking_outdated = false;
+                function update_ranking() {
+                    if ($('body').hasClass('window-hidden')) {
+                        return ranking_outdated = true;
+                    }
+                    var queryParam = window.location.search;
+                    $.ajax({
+                        url: queryParam ? queryParam + '&raw' : '?raw',
+                    }).done(function (data) {
+                        $('#ranking-table').html(data);
+                        if (localStorage.getItem('show-personal-info') == 'true') {
+                            $('.personal-info').show();
+                            $('#show-personal-info-checkbox').prop('checked', true);
+                        }
+                        {% if tab == 'ranking' %}
+                            window.applyRankingFilter();
+                        {% endif %}
+                        window.enableAdminOperations();
+                        install_tooltips();
+                    }).always(function () {
+                        ranking_outdated = false;
+                        setTimeout(update_ranking, 10000);
+                    });
+                }
+                $(window).on('dmoj:window-visible', function () {
+                    if (ranking_outdated) {
+                        update_ranking();
+                    }
+                });
+                setTimeout(update_ranking, 10000);
+            {% endif %}
+
+            // Show/hide personal info
+            $('#show-personal-info-checkbox').click(function () {
+                $('.personal-info').toggle();
+                localStorage.setItem('show-personal-info', $('.personal-info').is(':visible') ? 'true' : 'false');
+            });
+
+            if (localStorage.getItem('show-personal-info') == 'true') {
+                $('.personal-info').show();
+                $('#show-personal-info-checkbox').prop('checked', true);
+            }
+
+            // Show/hide virtual participations
+            {% if show_virtual %}
+                $('#show-virtual-participations-checkbox').prop('checked', true);
+            {% endif %}
+
+            $('#show-virtual-participations-checkbox').click(function () {
+                const parser = new URL(window.location.href);
+                parser.searchParams.set('show_virtual', '{{ 'false' if show_virtual else 'true' }}');
+                window.location.href = parser.href;
+            });
+
+            var contest_key = '{{contest.key}}';
+
+            // Alert dismissal
+            $("a#cache_alert").click(function () {
+                $(this).parent().hide();
+                localStorage.setItem(`hide-cache-alert-${contest_key}`, 'true');
+            });
+
+            if (localStorage.getItem(`hide-cache-alert-${contest_key}`) == 'true') {
+                $("a#cache_alert").click();
+            }
+
+            $("a#frozen_alert").click(function () {
+                $(this).parent().hide();
+                localStorage.setItem(`hide-frozen-alert-${contest_key}`, 'true');
+            });
+
+            if (localStorage.getItem(`hide-frozen-alert-${contest_key}`) == 'true') {
+                $("a#frozen_alert").click();
+            }
+
+            // Organization filter
+            var selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`) || '';
+
+            $('#org-filter').on('change', function() {
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, $(this).val().join(','));
+                window.applyRankingFilter();
+            });
+
+            window.clearRankingFilter = function () {
+                $('#ranking-table > tbody > tr[id]').each(function () {
+                    $(this).show();
+                });
+            };
+
+            window.applyRankingFilter = function () {
+                var selected_orgs_str = localStorage.getItem(`filter-selected-orgs-${contest_key}`);
+                if (!selected_orgs_str || selected_orgs_str.length === 0) {
+                    window.clearRankingFilter();
+                    return;
+                }
+
+                var selected_orgs = selected_orgs_str.split(',');
+                var counter = 0;
+                var previous_abs_rank = -1;
+
+                $('#ranking-table > tbody > tr[id]').each(function () {
+                    var row = $(this);
+                    var org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
+                    var org = org_anchor ? org_anchor.text.trim() : 'Other';
+
+                    if (!selected_orgs.includes(org)) {
+                        row.hide();
+                        return;
+                    }
+
+                    row.show();
+                    var rank_text = row.find("td")[0].innerText;
+                    var current_abs_rank = rank_text.match(/\(([^)]+)\)/);
+                    current_abs_rank = current_abs_rank ? current_abs_rank[1] : rank_text;
+
+                    if (previous_abs_rank == -1 || previous_abs_rank != current_abs_rank) {
+                        ++counter;
+                    }
+
+                    row.find("td")[0].innerHTML = `${counter}<br>(${current_abs_rank})`;
+                    previous_abs_rank = current_abs_rank;
+                });
+            };
+
+            if (selected_orgs) {
+                $('#org-filter').val(selected_orgs.split(','));
+                window.applyRankingFilter();
+            }
+
+            // Admin operations
+            window.enableAdminOperations = function () {
+                $('a.disqualify-participation').click(function (e) {
+                    e.preventDefault();
+                    if (e.ctrlKey || e.metaKey || confirm('{{ _('Are you sure you want to disqualify this participation?')|escapejs }}'))
+                        $(this).closest('form').submit();
+                });
+                $('a.un-disqualify-participation').click(function (e) {
+                    e.preventDefault();
+                    if (e.ctrlKey || e.metaKey || confirm('{{ _('Are you sure you want to un-disqualify this participation?')|escapejs }}'))
+                        $(this).closest('form').submit();
+                });
+            };
+
+            window.enableAdminOperations();
+
+            {% if tab == 'ranking' %}
+                // CSV export
+                window.download_table_as_csv = function() {
+                    function clean_text(text) {
+                        text = text.replace(/(\r\n|\n|\r)/gm, '').trim();
+                        text = text.replace(/"/g, '""');
+                        return '"' + text + '"';
+                    }
+
+                    var csv = [];
+
+                    $('#ranking-table thead tr').each(function () {
+                        var header = [];
+                        $(this).find('th').each(function () {
+                            var $col = $(this);
+                            if ($col.hasClass('rating-column')) {
+                                return;
+                            } else if ($col.hasClass('rank')) {
+                                header.push(clean_text($col.text()));
+                            } else if ($col.hasClass('username')) {
+                                header.push(clean_text('{{ _('Username')|escapejs }}'));
+                                header.push(clean_text('{{ _('Full Name')|escapejs }}'));
+                            } else {
+                                var name = $col.find('.problem-code').text();
+                                if (name == '') {
+                                    name = $col.text();
+                                }
+                                header.push(clean_text(name));
+                            }
+                        });
+                        csv.push(header.join(','));
+                    });
+
+                    $('#ranking-table tbody tr').each(function () {
+                        if ($(this).is(':hidden')) {
+                            return;
+                        }
+
+                        var row_data = [];
+                        $(this).find('td').each(function () {
+                            var $col = $(this);
+                            if ($col.hasClass('rating-column')) {
+                                return;
+                            } else if ($col.hasClass('user-name')) {
+                                row_data.push(clean_text($col.find('.rating').first().text()));
+                                row_data.push(clean_text($col.find('.personal-info').first().text()));
+                            } else {
+                                row_data.push(clean_text($col.text().replace(/\n.*/, '')));
+                            }
+                        });
+                        csv.push(row_data.join(','));
+                    });
+
+                    var csv_string = csv.join('\n');
+                    var filename = 'ranking_{{ contest.key }}_' + moment().format('YYYY-MM-DD-HH-mm-ss') + '.csv';
+                    var link = document.createElement('a');
+                    link.style.display = 'none';
+                    link.setAttribute('target', '_blank');
+                    link.setAttribute('href', 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv_string));
+                    link.setAttribute('download', filename);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                };
+            {% endif %}
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    {# Alerts #}
+    {% if is_frozen %}
+        <div class="card bg-warning-50 border-warning-200 mb-6" id="frozen-alert-card">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-warning-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <p class="text-sm text-warning-800">
+                        {%- trans frozen_minutes=contest.frozen_last_minutes -%}
+                            The scoreboard was frozen with {{frozen_minutes}} minutes remaining - submissions in the last {{frozen_minutes}} minutes of the contest are still shown as pending.
+                        {%- endtrans -%}
+                    </p>
+                </div>
+                <a href="#" id="frozen_alert" class="text-warning-600 hover:text-warning-700 font-bold text-xl leading-none">×</a>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if not contest.ended and cache_timeout %}
+        <div class="card bg-info-50 border-info-200 mb-6" id="cache-alert-card">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-info-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    <p class="text-sm text-info-800">
+                        {%- trans -%}
+                            The scoreboard is cached for {{cache_timeout}} seconds, your submission might take some time before it appears here.
+                        {%- endtrans -%}
+                    </p>
+                </div>
+                <a href="#" id="cache_alert" class="text-info-600 hover:text-info-700 font-bold text-xl leading-none">×</a>
+            </div>
+        </div>
+    {% endif %}
+
+    {# Controls #}
+    <div class="card mb-6">
+        <div class="flex flex-col gap-4">
+            {# Organization Filter #}
+            {% if tab == 'ranking' %}
+                <div class="flex flex-wrap items-center gap-4">
+                    <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ _('Filter by organization:') }}
+                    </label>
+                    <select id="org-filter" multiple class="input flex-1 max-w-md" size="3">
+                        {# Options populated by JavaScript #}
+                    </select>
+                </div>
+            {% endif %}
+
+            {# Checkboxes #}
+            <div class="flex flex-wrap gap-6">
+                {% if tab != 'official_ranking' %}
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input id="show-personal-info-checkbox" type="checkbox" class="rounded text-primary-600 focus:ring-primary-500">
+                        <span class="text-sm text-gray-700">{{ _('Show full name/organization') }}</span>
+                    </label>
+                {% endif %}
+
+                {% if tab == 'ranking' %}
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input id="show-virtual-participations-checkbox" type="checkbox" class="rounded text-primary-600 focus:ring-primary-500">
+                        <span class="text-sm text-gray-700">{{ _('Show virtual participations') }}</span>
+                    </label>
+                {% endif %}
+            </div>
+
+            {# Export CSV #}
+            {% if tab == 'ranking' and not is_ICPC_format %}
+                <div>
+                    <button onclick="download_table_as_csv()" class="btn btn-outline btn-sm">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ _('Download as CSV') }}
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Ranking Table #}
+    <div class="card overflow-x-auto">
+        <div id="ranking-table">
+            {{ rendered_ranking_table|safe }}
+        </div>
+    </div>
+
+    {# ICPC Legend #}
+    {% if is_ICPC_format %}
+        <div class="card mt-6 max-w-xs">
+            <h3 class="card-title">{{ _('Cell colours') }}</h3>
+            <table class="table w-full">
+                <tbody>
+                    <tr class="first-solve bg-success-100">
+                        <td>{{ _('Solved first') }}</td>
+                    </tr>
+                    <tr class="full-score bg-success-50">
+                        <td>{{ _('Solved') }}</td>
+                    </tr>
+                    <tr class="failed-score bg-error-50">
+                        <td>{{ _('Tried, incorrect') }}</td>
+                    </tr>
+                    <tr class="pending bg-gray-100">
+                        <td>{{ _('Tried, pending') }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ _('Untried') }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

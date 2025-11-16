@@ -1,0 +1,200 @@
+{% extends "base-modern.html" %}
+
+{% block js_media %}
+    {% include "timezone/media-js.html" %}
+    {{ form.media.js }}
+    <script type="text/javascript">
+        $(function () {
+            // Toggle password requirements
+            $('.pass-req-link').click(function () {
+                $('#pass-req').slideToggle('fast');
+                return false;
+            });
+
+            // Auto-detect timezone
+            try {
+                var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                if (typeof tz === 'string' && $('#id_timezone option[value="' + tz + '"]').length) {
+                    $('#id_timezone').val(tz).change();
+                }
+            } catch (e) {}
+        });
+    </script>
+    {% if form.captcha %}
+        {{ recaptcha_init(LANGUAGE_CODE) }}
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    <div class="flex justify-center items-start min-h-[70vh] px-4 py-8">
+        <div class="card w-full max-w-2xl">
+            <h2 class="text-3xl font-bold text-center text-gray-900 mb-6">
+                {{ _('Join Our Community') }}
+            </h2>
+
+            {% if not oauth_only %}
+                <form action="" method="post" class="space-y-5">
+                    {% csrf_token %}
+
+                    {# Full Name #}
+                    <div>
+                        <label for="id_full_name" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Full name') }}
+                            <span class="text-gray-500 text-xs ml-1">({{ _('can be blank') }})</span>
+                        </label>
+                        {{ form.full_name.as_widget(attrs={'class': 'input w-full' + (' border-error-500' if form.full_name.errors else ''), 'placeholder': _('Enter your full name')}) }}
+                        {% if form.full_name.errors %}
+                            <p class="mt-1 text-sm text-error-600">{{ form.full_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    {# Username #}
+                    <div>
+                        <label for="id_username" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Username') }} <span class="text-error-600">*</span>
+                        </label>
+                        {{ form.username.as_widget(attrs={'class': 'input w-full' + (' border-error-500' if form.username.errors else ''), 'placeholder': _('Choose a unique username')}) }}
+                        {% if form.username.errors %}
+                            <p class="mt-1 text-sm text-error-600">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    {# Email #}
+                    <div>
+                        <label for="id_email" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Email') }} <span class="text-error-600">*</span>
+                            <span class="text-gray-500 text-xs ml-1">({{ _('please choose a popular email provider, e.g. gmail') }})</span>
+                        </label>
+                        {{ form.email.as_widget(attrs={'class': 'input w-full' + (' border-error-500' if form.email.errors else ''), 'placeholder': _('Enter your email address'), 'type': 'email'}) }}
+                        {% if form.email.errors %}
+                            <p class="mt-1 text-sm text-error-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    {# Password #}
+                    <div>
+                        <label for="id_password1" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Password') }} <span class="text-error-600">*</span>
+                            <a href="#" class="pass-req-link text-xs text-primary-600 hover:text-primary-700 ml-1">({{ _('Requirements') }})</a>
+                        </label>
+                        <div id="pass-req" class="hidden bg-info-50 border border-info-200 rounded-lg p-3 mb-3 text-sm">
+                            <ul class="list-disc list-inside space-y-1">
+                                {% for validator in password_validators %}
+                                    <li class="text-info-800">{{ validator.get_help_text() }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {{ form.password1.as_widget(attrs={'class': 'input w-full' + (' border-error-500' if form.password1.errors else ''), 'placeholder': _('Enter a secure password')}) }}
+                        {% if form.password1.errors %}
+                            <p class="mt-1 text-sm text-error-600">{{ form.password1.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    {# Confirm Password #}
+                    <div>
+                        <label for="id_password2" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Confirm Password') }} <span class="text-error-600">*</span>
+                        </label>
+                        {{ form.password2.as_widget(attrs={'class': 'input w-full' + (' border-error-500' if form.password2.errors else ''), 'placeholder': _('Confirm your password')}) }}
+                        {% if form.password2.errors %}
+                            <p class="mt-1 text-sm text-error-600">{{ form.password2.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    {# Timezone #}
+                    <div>
+                        <label for="id_timezone" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Timezone') }} <span class="text-error-600">*</span>
+                            <span class="text-gray-500 text-xs ml-1">({{ _('select your closest major city') }})</span>
+                        </label>
+                        {{ form.timezone.as_widget(attrs={'class': 'input w-full'}) }}
+                        <div class="text-center mt-2 text-sm">
+                            <span class="text-gray-600">{{ _('or') }}</span>
+                            <a id="open-map" href="#" data-featherlight=".map-wrap" class="text-primary-600 hover:text-primary-700 ml-1">
+                                {{ _('pick from map') }}
+                            </a>
+                        </div>
+                    </div>
+
+                    {# Default Language #}
+                    <div>
+                        <label for="id_language" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Default language') }} <span class="text-error-600">*</span>
+                        </label>
+                        {{ form.language.as_widget(attrs={'class': 'input w-full'}) }}
+                    </div>
+
+                    {# Affiliated Organizations #}
+                    <div>
+                        <label for="id_organizations" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Affiliated organizations') }}
+                            <span class="text-gray-500 text-xs ml-1">({{ _('can be blank') }})</span>
+                        </label>
+                        {{ form.organizations }}
+                        {% if form.organizations.errors %}
+                            <p class="mt-1 text-sm text-error-600">{{ form.organizations.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    {# Newsletter Checkbox #}
+                    {% if form.newsletter %}
+                        <div class="flex items-center gap-2">
+                            {{ form.newsletter.as_widget(attrs={'class': 'rounded text-primary-600 focus:ring-primary-500'}) }}
+                            <label for="id_newsletter" class="text-sm text-gray-700 cursor-pointer">
+                                {{ _('Notify me about upcoming contests') }}
+                            </label>
+                        </div>
+                    {% endif %}
+
+                    {# reCAPTCHA #}
+                    {% if form.captcha %}
+                        <div class="flex justify-center">
+                            {{ form.captcha }}
+                        </div>
+                        {% if form.captcha.errors %}
+                            <p class="mt-1 text-sm text-error-600 text-center">{{ form.captcha.errors.0 }}</p>
+                        {% endif %}
+                    {% endif %}
+
+                    {# Submit Button #}
+                    <button type="submit" class="btn btn-success w-full mt-6">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/>
+                        </svg>
+                        {{ _('Register!') }}
+                    </button>
+                </form>
+            {% endif %}
+
+            {# Divider #}
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">{{ _('Or register with') }}</span>
+                </div>
+            </div>
+
+            {# OAuth Buttons #}
+            {% include "registration/oauth.html" %}
+
+            {# Terms of Service #}
+            {% if tos_url %}
+                <div class="mt-6 text-center text-sm text-gray-600">
+                    <div class="prose prose-sm max-w-none">
+                        {{ (_('By registering, you agree to our [Terms & Conditions][0].') + '\n\n  [0]: ' + tos_url)|markdown('flatpage', strip_paragraphs=True) }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Timezone Map (hidden, shown in lightbox) #}
+    <div class="map-wrap" style="display: none;">
+        <div class="map-inset">
+            <div class="map-axis-x"></div>
+            <div class="map-axis-y"></div>
+        </div>
+    </div>
+{% endblock %}
