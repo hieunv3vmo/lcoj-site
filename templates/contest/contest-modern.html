@@ -1,0 +1,455 @@
+{% extends "base-modern.html" %}
+{% import "components/cards.html" as card %}
+{% import "components/badges.html" as badge %}
+{% import "components/buttons.html" as btn %}
+{% import "components/alerts.html" as alert %}
+
+{% block meta %}
+    {% if not comment_lock %}
+        {% include "comments/media-css.html" %}
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            // Countdown timer
+            document.querySelectorAll('.time-remaining').forEach(function(elem) {
+                const secs = parseInt(elem.dataset.secs);
+                if (secs <= 0) return;
+
+                elem.dataset.start = Date.now();
+                setInterval(function() {
+                    const remaining = Math.max(0, secs - Math.floor((Date.now() - elem.dataset.start) / 1000));
+                    if (remaining <= 0) {
+                        elem.textContent = '{{ _("Time is up!") }}';
+                        return;
+                    }
+
+                    const days = Math.floor(remaining / 86400);
+                    const hours = Math.floor((remaining % 86400) / 3600);
+                    const minutes = Math.floor((remaining % 3600) / 60);
+                    const seconds = remaining % 60;
+
+                    if (days > 0) {
+                        elem.textContent = days + 'd ' + hours + 'h ' + minutes + 'm';
+                    } else if (hours > 0) {
+                        elem.textContent = hours + 'h ' + minutes + 'm ' + seconds + 's';
+                    } else {
+                        elem.textContent = minutes + 'm ' + seconds + 's';
+                    }
+                }, 1000);
+            });
+        });
+    </script>
+    {% include "contest/media-js.html" %}
+    {% if not comment_lock %}
+        {% include "comments/media-js.html" %}
+    {% endif %}
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'detail' %}
+    {% include "contest/contest-tabs-modern.html" %}
+
+    {# Organization Tags #}
+    {% if contest.is_organization_private %}
+        <div class="flex flex-wrap gap-2 mt-4">
+            {% for org in contest.organizations.all() %}
+                <a href="{{ org.get_absolute_url() }}" class="inline-flex items-center gap-1 bg-gray-300 text-gray-900 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-400">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ org.name }}
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    {# Contest Banner #}
+    <div class="card mb-6">
+        <div class="text-center">
+            {# Contest Status #}
+            <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.name|urlquote('') }}&amp;iso={{- (contest.start_time if contest.start_time >= now else contest.end_time)|utc|date('Y-m-d\TH:i:s') }}"
+               class="inline-block mb-4 text-lg font-semibold"
+               target="_blank">
+                {%- if is_in_contest and not request.participation.live -%}
+                    {% if request.participation.spectate %}
+                        <span class="text-info-700">
+                            <svg class="w-5 h-5 inline-block mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                            </svg>
+                            {{- _('Spectating, contest ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) -}}
+                        </span>
+                    {% elif request.participation.end_time %}
+                        <span class="text-warning-700">
+                            {{- _('Participating virtually, %(countdown)s remaining.', countdown=as_countdown(request.participation.time_remaining)) -}}
+                        </span>
+                    {% else %}
+                        <span class="text-primary-700">{{- _('Participating virtually.') -}}</span>
+                    {% endif %}
+                {%- else -%}
+                    {% if contest.start_time > now %}
+                        <span class="text-info-700">
+                            <svg class="w-5 h-5 inline-block mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                            </svg>
+                            {{- _('Starting in %(countdown)s.', countdown=as_countdown(contest.time_before_start)) -}}
+                        </span>
+                    {% elif contest.end_time < now %}
+                        <span class="text-gray-600">{{- _('Contest is over.') -}}</span>
+                    {% else %}
+                        {%- if has_joined -%}
+                            {% if live_participation.ended %}
+                                <span class="text-error-700">{{- _('Your time is up! Contest ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) -}}</span>
+                            {% else %}
+                                <span class="text-success-700">{{- _('You have %(countdown)s remaining.', countdown=as_countdown(live_participation.time_remaining)) -}}</span>
+                            {% endif %}
+                        {%- else -%}
+                            <span class="text-success-700">
+                                <svg class="w-5 h-5 inline-block mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ _('Contest ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) }}
+                            </span>
+                        {%- endif -%}
+                    {% endif %}
+                {%- endif -%}
+            </a>
+
+            {# Contest Time Details #}
+            <div class="text-sm text-gray-700 space-y-1">
+                {% with start_time=contest.start_time|date(_("F j, Y, G:i T")) %}
+                    {% if contest.time_limit %}
+                        {% set end_time=contest.end_time|date(_("F j, Y, G:i T")) %}
+                        {% set time_limit=contest.time_limit|timedelta('localized-no-seconds') %}
+                        <div>{{ _('%(time_limit)s window between %(start_time)s and %(end_time)s', start_time='<strong>' + start_time + '</strong>', end_time='<strong>' + end_time + '</strong>', time_limit='<strong>' + time_limit + '</strong>')|safe }}</div>
+                    {% else %}
+                        {% set length=contest.contest_window_length|timedelta('localized-no-seconds') %}
+                        <div>{{ _('%(length)s long starting on %(start_time)s', start_time='<strong>' + start_time + '</strong>', length='<strong>' + length + '</strong>')|safe }}</div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+
+    {# Contest Information #}
+    {% if contest.show_short_display %}
+        <div class="card prose max-w-none mb-6">
+            <h3 class="card-title mb-4">{{ _('Contest Information') }}</h3>
+            <ul class="space-y-3">
+                {# Authors #}
+                {% with authors=contest.authors.all() %}
+                    {% if not contest.hide_problem_authors and authors %}
+                        <li>
+                            {% trans trimmed count=authors|length, link_authors=link_users(authors) %}
+                                The author of this contest is {{ link_authors }}.
+                            {% pluralize count %}
+                                The authors of this contest are {{ link_authors }}.
+                            {% endtrans %}
+                        </li>
+                    {% endif %}
+                {% endwith %}
+
+                {# Testers #}
+                {% with testers=contest.testers.all() %}
+                    {% if not contest.hide_problem_authors and testers %}
+                        <li>
+                            {% trans trimmed count=testers|length, link_testers=link_users(testers) %}
+                                Special thanks to {{ link_testers }} for testing and feedback on the problems.
+                            {% pluralize count %}
+                                Special thanks to {{ link_testers }} for testing and feedback on the problems.
+                            {% endtrans %}
+                        </li>
+                    {% endif %}
+                {% endwith %}
+
+                {# Rating Information #}
+                <li>
+                    {% if contest.is_rated %}
+                        {% if contest.rate_all %}
+                            {% if contest.rating_floor is not none and contest.rating_ceiling is not none %}
+                                {{ _('This contest will be **rated** for **all** participants who have a rating between **%(rating_floor)d** and **%(rating_ceiling)d**, inclusive.', rating_floor=contest.rating_floor, rating_ceiling=contest.rating_ceiling)|markdown('default') }}
+                            {% elif contest.rating_floor is not none and contest.rating_ceiling is none %}
+                                {{ _('This contest will be **rated** for **all** participants who have a rating of at least **%(rating_floor)d**.', rating_floor=contest.rating_floor)|markdown('default') }}
+                            {% elif contest.rating_floor is none and contest.rating_ceiling is not none %}
+                                {{ _('This contest will be **rated** for **all** participants who have a rating of at most **%(rating_ceiling)d**.', rating_ceiling=contest.rating_ceiling)|markdown('default') }}
+                            {% else %}
+                                {{ _('This contest will be **rated** for **all** participants.')|markdown('default') }}
+                            {% endif %}
+                        {% else %}
+                            {% if contest.rating_floor is not none and contest.rating_ceiling is not none %}
+                                {{ _('This contest will be **rated** for participants who submit at least once and have a rating between **%(rating_floor)d** and **%(rating_ceiling)d**, inclusive.', rating_floor=contest.rating_floor, rating_ceiling=contest.rating_ceiling)|markdown('default') }}
+                            {% elif contest.rating_floor is not none and contest.rating_ceiling is none %}
+                                {{ _('This contest will be **rated** for participants who submit at least once and have a rating of at least **%(rating_floor)d**.', rating_floor=contest.rating_floor)|markdown('default') }}
+                            {% elif contest.rating_floor is none and contest.rating_ceiling is not none %}
+                                {{ _('This contest will be **rated** for participants who submit at least once and have a rating of at most **%(rating_ceiling)d**.', rating_ceiling=contest.rating_ceiling)|markdown('default') }}
+                            {% else %}
+                                {{ _('This contest will be **rated** for participants who submit at least once.')|markdown('default') }}
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                        {{ _('This contest will **not** be rated.')|markdown('default') }}
+                    {% endif %}
+                </li>
+
+                {# Contest Rules #}
+                <li>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li>
+                            {% if metadata.has_partials %}
+                                {{ _('**Partial scoring is enabled** for some or all of these problems.')|markdown('default') }}
+                            {% else %}
+                                {{ _('This contest **will not use partial scoring**.')|markdown('default') }}
+                            {% endif %}
+                        </li>
+                        <li>
+                            {% if metadata.has_pretests %}
+                                {{ _('The pretest system **will be used** for some or all of these problems.')|markdown('default') }}
+                            {% else %}
+                                {{ _('The pretest system **will not be used** for this contest.')|markdown('default') }}
+                            {% endif %}
+                        </li>
+                        <li>
+                            {% if metadata.has_submission_cap %}
+                                {{ _('Some or all of these problems **have a submission limit**.')|markdown('default') }}
+                            {% else %}
+                                {{ _('There is **no submission limit** for any of these problems.')|markdown('default') }}
+                            {% endif %}
+                        </li>
+                    </ul>
+                </li>
+
+                {# Contest Format #}
+                <li>
+                    {{ _('The contest format is **%(format)s**.', format=contest.format.name)|markdown('default') }}
+                    <ul class="list-disc pl-6 space-y-1 mt-2">
+                        {% for line in contest.format.get_short_form_display() %}
+                            <li>{{ line|markdown('default') }}</li>
+                        {% endfor %}
+                    </ul>
+                </li>
+
+                {# Scoreboard Visibility #}
+                <li>
+                    {% if contest.scoreboard_visibility == contest.SCOREBOARD_VISIBLE %}
+                        {{ _('The scoreboard will be **visible** for the duration of the contest.')|markdown('default') }}
+                    {% elif contest.scoreboard_visibility == contest.SCOREBOARD_AFTER_PARTICIPATION %}
+                        {{ _('The scoreboard will be **hidden** until your window is over.')|markdown('default') }}
+                    {% elif contest.scoreboard_visibility == contest.SCOREBOARD_AFTER_CONTEST %}
+                        {{ _('The scoreboard will be **hidden** for the entire duration of the contest.')|markdown('default') }}
+                    {% endif %}
+                </li>
+
+                {# Access Code #}
+                {% if contest.access_code %}
+                    <li>{{ _('An **access code is required** to join the contest.')|markdown('default') }}</li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {# Problems Table #}
+    {% if is_in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
+        <div class="card mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title flex items-center gap-2">
+                    <svg class="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
+                    </svg>
+                    {{ _('Problems') }}
+                </h2>
+                {% if can_edit and can_download_data %}
+                    <a href="{{ url('contest_prepare_data', contest.key) }}" class="btn btn-outline btn-sm">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ _('Download data') }}
+                    </a>
+                {% endif %}
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="table table-striped w-full">
+                    <thead>
+                        <tr>
+                            <th class="w-16">#</th>
+                            {% if request.user.is_authenticated %}
+                                <th class="w-12 text-center">
+                                    <svg class="w-4 h-4 inline-block" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                </th>
+                            {% endif %}
+                            <th>{{ _('Problem') }}</th>
+                            {% if not is_ICPC_format %}
+                                <th class="text-right">{{ _('Points') }}</th>
+                            {% endif %}
+                            {% if metadata.has_public_editorials %}
+                                <th class="text-center">{{ _('Editorials') }}</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for problem in contest_problems %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="font-bold text-primary-600">{{ contest.get_label_for_problem(loop.index0) }}</td>
+                                {% if request.user.is_authenticated %}
+                                    <td class="text-center">
+                                        {% if problem.id in completed_problem_ids %}
+                                            <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                                {% if problem.is_public %}
+                                                    <svg class="w-5 h-5 text-success-600 inline-block" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                {% else %}
+                                                    <svg class="w-5 h-5 text-success-600 inline-block" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                {% endif %}
+                                            </a>
+                                        {% elif problem.id in attempted_problem_ids %}
+                                            <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                                {% if problem.is_public %}
+                                                    <svg class="w-5 h-5 text-warning-600 inline-block" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                {% else %}
+                                                    <svg class="w-5 h-5 text-warning-600 inline-block" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                {% endif %}
+                                            </a>
+                                        {% else %}
+                                            {% if not problem.is_public %}
+                                                <svg class="w-5 h-5 text-gray-400 inline-block" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                                </svg>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                                <td>
+                                    {% if can_view_all_problems or problem.is_public %}
+                                        <a href="{{ url('problem_detail', problem.code) }}" class="font-medium text-gray-900 hover:text-primary-600">
+                                            {{ problem.i18n_name or problem.name }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-gray-600">{{ problem.i18n_name or problem.name }}</span>
+                                    {% endif %}
+                                </td>
+                                {% if not is_ICPC_format %}
+                                    <td class="text-right font-mono">{{ problem.points|floatformat(-2) }}</td>
+                                {% endif %}
+                                {% if metadata.has_public_editorials %}
+                                    <td class="text-center">
+                                        {% if problem.is_public and problem.has_public_editorial %}
+                                            <a href="{{ url('problem_editorial', problem.code) }}" class="text-primary-600 hover:text-primary-700">
+                                                <svg class="w-5 h-5 inline-block" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/>
+                                                </svg>
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if can_view_all_problems %}
+                <div class="mt-4">
+                    <a href="{{ url('contest_all_problems', contest.key) }}" class="btn btn-outline btn-sm">
+                        {{ _('All problems') }}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        {# Announcements #}
+        {% if has_announcements or can_edit %}
+            <div class="card mb-6">
+                <h2 class="card-title flex items-center gap-2 mb-4">
+                    <svg class="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
+                    </svg>
+                    {{ _('Announcements') }}
+                </h2>
+                <div class="space-y-4">
+                    {% for announcement in announcements %}
+                        <div class="border-b border-gray-200 last:border-0 pb-4 last:pb-0">
+                            <div class="text-sm text-gray-500 mb-1">{{ announcement.date|date(_("F j, Y, G:i")) }}</div>
+                            <h4 class="font-semibold text-gray-900 mb-2">{{ announcement.title }}</h4>
+                            <div class="prose max-w-none">
+                                {{ announcement.description|markdown('announcement', MATH_ENGINE)|reference }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    {% if can_edit %}
+                        <div class="pt-2">
+                            <a href="{{ url('contest_announce', contest.key) }}" class="btn btn-outline btn-sm">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ _('Add an announcement') }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        {# Clarifications #}
+        {% if has_clarifications %}
+            <div class="card mb-6">
+                <h2 class="card-title flex items-center gap-2 mb-4">
+                    <svg class="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('Clarifications') }}
+                </h2>
+                <div class="space-y-4">
+                    {% for clarification in clarifications %}
+                        <div class="border-b border-gray-200 last:border-0 pb-4 last:pb-0">
+                            <div class="flex items-start gap-4 mb-2">
+                                <div class="text-sm text-gray-500">{{ clarification.date|date(_("F j, Y, G:i")) }}</div>
+                                <a href="{{ url('problem_detail', clarification.problem.code) }}" class="font-medium text-primary-600 hover:text-primary-700">
+                                    {{ clarification.problem.name }}
+                                </a>
+                            </div>
+                            <div class="prose max-w-none">
+                                {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+
+    {# Contest Description #}
+    <div class="card prose max-w-none mb-6">
+        {% cache 3600 'contest_html' contest.id MATH_ENGINE %}
+            {{ contest.description|markdown('contest', MATH_ENGINE)|reference|str|safe }}
+        {% endcache %}
+    </div>
+
+    {# Social Sharing #}
+    <div class="flex items-center gap-4 mb-6">
+        {{ post_to_facebook(request, contest, '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>')|safe }}
+        {{ post_to_twitter(request, SITE_NAME + ':', contest, '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>')|safe }}
+    </div>
+
+    {# Comments #}
+    {% if not comment_lock %}
+        <div class="mt-8">
+            {% include "comments/list.html" %}
+        </div>
+    {% endif %}
+{% endblock %}
