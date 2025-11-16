@@ -11,7 +11,7 @@
     {% compress js %}
         <script src="{{ static('event.js') }}"></script>
         {% if dynamic_update and EVENT_LAST_MSG %}
-            <script src="{{ static('libs/chart.js') }}" type="text/javascript"></script>
+            {# Chart.js loaded globally via CDN in base.html #}
             <script type="text/javascript">
                 $(function () {
                     if (!window.event_dispatcher)
@@ -99,7 +99,7 @@
         </script>
 
         {% if statistics %}
-            <script src="{{ static('libs/chart.js/Chart.bundle.js') }}" type="text/javascript"></script>
+            {# Chart.js loaded globally via CDN in base.html #}
             <script type="text/javascript">
                 var stats_data = {{ statistics|json|safe }};
 

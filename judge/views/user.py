@@ -186,7 +186,7 @@ EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
 
 class UserAboutPage(UserPage):
-    template_name = 'user/user-about.html'
+    template_name = 'user/user-about-modern.html'
 
     def get_context_data(self, **kwargs):
         context = super(UserAboutPage, self).get_context_data(**kwargs)

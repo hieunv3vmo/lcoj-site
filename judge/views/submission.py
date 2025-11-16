@@ -351,7 +351,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
     title = gettext_lazy('All submissions')
     content_title = gettext_lazy('All submissions')
     tab = 'all_submissions_list'
-    template_name = 'submission/list.html'
+    template_name = 'submission/list-modern.html'
     context_object_name = 'submissions'
     first_page_href = None
 

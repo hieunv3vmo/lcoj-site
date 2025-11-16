@@ -1,29 +1,18 @@
 #!/bin/bash
-# Combined build script for both legacy SCSS styles and modern Vite build
-# This script is compatible with lcoj-docker deployment
+# Modern Vite build script for LCOJ UI
+# Builds Tailwind CSS v4 + Alpine.js assets
 
 set -e  # Exit on error
 
 cd "$(dirname "$0")" || exit
 
 echo "========================================="
-echo "Building LCOJ Styles (Legacy + Modern)"
+echo "Building LCOJ Modern UI with Vite"
 echo "========================================="
 
-# 1. Build legacy SCSS styles (for backward compatibility)
+# 1. Check if Node.js and npm are available
 echo ""
-echo "[1/3] Building legacy SCSS styles..."
-echo "-------------------------------------"
-if [ -f "make_style.sh" ]; then
-    bash make_style.sh
-    echo "✓ Legacy SCSS styles built successfully"
-else
-    echo "⚠ make_style.sh not found, skipping legacy build"
-fi
-
-# 2. Check if Node.js and npm are available
-echo ""
-echo "[2/3] Checking Node.js environment..."
+echo "[1/3] Checking Node.js environment..."
 echo "-------------------------------------"
 if ! command -v node &> /dev/null; then
     echo "✗ Error: Node.js is not installed"
@@ -40,9 +29,9 @@ fi
 echo "✓ Node.js version: $(node --version)"
 echo "✓ npm version: $(npm --version)"
 
-# 3. Install npm dependencies if needed
+# 2. Install npm dependencies if needed
 echo ""
-echo "[3/3] Installing npm dependencies..."
+echo "[2/3] Installing npm dependencies..."
 echo "-------------------------------------"
 if [ ! -d "node_modules" ]; then
     echo "Installing npm packages (this may take a while)..."
@@ -53,19 +42,23 @@ else
     echo "  (run 'rm -rf node_modules' to force reinstall)"
 fi
 
-# 4. Build modern Vite assets
+# 3. Build modern Vite assets
 echo ""
-echo "[4/4] Building modern UI with Vite..."
+echo "[3/3] Building modern UI with Vite..."
 echo "-------------------------------------"
 npm run build
 
 echo ""
 echo "========================================="
-echo "✓ All styles built successfully!"
+echo "✓ Modern UI built successfully!"
 echo "========================================="
 echo ""
 echo "Built assets:"
-echo "  - Legacy SCSS: resources/*.css"
-echo "  - Modern Vite: static/dist/js/*.js"
-echo "  - Modern Vite: static/dist/css/*.css"
+echo "  - JavaScript: static/dist/js/main-*.js"
+echo "  - CSS: static/dist/css/styles-*.css"
+echo "  - Vite manifest: static/dist/.vite/manifest.json"
+echo ""
+echo "Next steps:"
+echo "  1. Run: python manage.py collectstatic --noinput"
+echo "  2. Restart your server"
 echo ""

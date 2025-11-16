@@ -212,7 +212,7 @@
     </script>
 
     {% if ratings %}
-        <script type="text/javascript" src="{{ static('libs/chart.js/Chart.js') }}"></script>
+        {# Chart.js loaded globally via CDN in base.html #}
         <script type="text/javascript">
             var rating_history = {{ rating_data }};
 
