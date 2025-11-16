@@ -85,6 +85,24 @@
         </style>
     {% endif %}
     {% block media %}{% endblock %}
+
+    {# Global CDN Libraries - All missing libraries now available via CDN #}
+    {% set use_featherlight = true %}
+    {% set use_chartjs = true %}
+    {% set use_select2 = true %}
+    {% set use_clipboard = true %}
+    {% set use_nouislider = true %}
+    {% set use_tablesorter = true %}
+    {% set use_jqueryui = true %}
+    {% set use_daterangepicker = true %}
+    {% set use_diff2html = true %}
+    {% set use_jsdiff = true %}
+    {% set use_jszip = true %}
+    {% set use_jquery_formset = true %}
+    {% set use_jquery_dirty = true %}
+    {% set use_moment = true %}
+    {% include "libs-cdn.html" %}
+
     {% if not INLINE_JQUERY %}
         <script src="{{ JQUERY_JS }}"></script>
     {% endif %}
