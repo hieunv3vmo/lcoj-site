@@ -67,9 +67,13 @@
             <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}">
         {% endif %}
         {% if INLINE_FONTAWESOME %}<link rel="stylesheet" href="{{ static('libs/fontawesome/font-awesome.css') }}">{% endif %}
-        <link rel="stylesheet" href="{{ static('source_sans_pro.css') }}">
-        <link rel="stylesheet" type="text/css" href="{{ static('libs/clipboard/tooltip.css') }}">
-        <link rel="stylesheet" type="text/css" href="{{ static('libs/select2/select2.css') }}">
+    {% endcompress %}
+    {# Source Sans Pro font from Google Fonts (local file not available) #}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap">
+    {% compress css %}
+        {# Legacy libs removed - files not available, modern alternatives used #}
+        {# <link rel="stylesheet" type="text/css" href="{{ static('libs/clipboard/tooltip.css') }}"> #}
+        {# <link rel="stylesheet" type="text/css" href="{{ static('libs/select2/select2.css') }}"> #}
     {% endcompress %}
     <link rel="canonical"
           href="{{ DMOJ_SCHEME }}://{{ DMOJ_CANONICAL|default(site.domain) }}{{ request.get_full_path() }}">
@@ -90,11 +94,12 @@
         {% if INLINE_JQUERY %}
             <script src="{{ static('libs/jquery-3.4.1.min.js') }}"></script>
         {% endif %}
-        <script src="{{ static('libs/jquery-cookie.js') }}"></script>
-        <script src="{{ static('libs/jquery-taphold.js') }}"></script>
-        <script src="{{ static('libs/jquery.unveil.js') }}"></script>
-        <script src="{{ static('libs/moment.js') }}"></script>
-        <script src="{{ static('libs/select2/select2.js') }}"></script>
+        {# Legacy jQuery plugins removed - files not available #}
+        {# <script src="{{ static('libs/jquery-cookie.js') }}"></script> #}
+        {# <script src="{{ static('libs/jquery-taphold.js') }}"></script> #}
+        {# <script src="{{ static('libs/jquery.unveil.js') }}"></script> #}
+        {# <script src="{{ static('libs/moment.js') }}"></script> #}
+        {# <script src="{{ static('libs/select2/select2.js') }}"></script> #}
         {% include "extra_js.html" %}
         <script src="{{ static('common.js') }}"></script>
         <script src="{{ static('event.js') }}"></script>
