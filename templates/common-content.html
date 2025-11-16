@@ -5,9 +5,28 @@
 {% endblock %}
 
 {% block js_media %}
+    {# Clipboard.js - using CDN as local files not available #}
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
     {% compress js %}
-        <script src="{{ static('libs/clipboard/clipboard.js') }}"></script>
-        <script src="{{ static('libs/clipboard/tooltip.js') }}"></script>
+        {# Tooltip functionality (was libs/clipboard/tooltip.js) - inline minimal version #}
+        <script>
+            function showTooltip(elem, msg) {
+                elem.setAttribute('class', 'btn-clipboard tooltipped tooltipped-s');
+                elem.setAttribute('aria-label', msg);
+            }
+            function fallbackMessage(action) {
+                var actionMsg = '';
+                var actionKey = (action === 'cut' ? 'X' : 'C');
+                if (/iPhone|iPad/i.test(navigator.userAgent)) {
+                    actionMsg = 'No support :(';
+                } else if (/Mac/i.test(navigator.userAgent)) {
+                    actionMsg = 'Press ⌘-' + actionKey + ' to ' + action;
+                } else {
+                    actionMsg = 'Press Ctrl-' + actionKey + ' to ' + action;
+                }
+                return actionMsg;
+            }
+        </script>
         <script type="text/javascript">
             $(function () {
                 var info_float = $('.info-float');
