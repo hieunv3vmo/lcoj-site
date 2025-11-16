@@ -9,7 +9,9 @@ ValueError: The file 'css/tailwindcss' could not be found with <django.contrib.s
 
 ## The Cause
 
-The old deployment script only builds legacy SCSS styles, not the new Vite + Tailwind CSS v4 assets.
+Django's `collectstatic` was trying to process Vite source CSS files that contain `@import "tailwindcss";`. This has been fixed in commit 7034a86+.
+
+**If you're on the latest branch, this issue is already resolved!**
 
 ## The Solution (1 Minute Fix)
 

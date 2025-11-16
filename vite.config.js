@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           main: resolve(__dirname, 'resources/js/main.js'),
-          styles: resolve(__dirname, 'resources/css/main.css'),
+          styles: resolve(__dirname, 'vite-src/css/main.css'),
         },
         output: {
           // Organize output files
@@ -92,7 +92,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': resolve(__dirname, 'resources/js'),
-        '@css': resolve(__dirname, 'resources/css'),
+        '@css': resolve(__dirname, 'vite-src/css'),
       },
     },
 

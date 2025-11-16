@@ -48,3 +48,7 @@ celerybeat-schedule.*
 static/dist/
 .vite/
 vite.config.js.timestamp-*
+# Vite source files (not static assets)
+# Built assets go to static/dist/
+# These source files should be tracked in git
+
