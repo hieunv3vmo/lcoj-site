@@ -11,9 +11,12 @@ import './components/dropdown';
 import './components/modal';
 import './components/tabs';
 import './components/select';
+import './components/loading';
+import './components/toast';
 
 // Import utilities
 import './utils/helpers';
+import './utils/animations';
 
 // Log initialization
 console.log('LCOJ Modern UI initialized with Alpine.js');

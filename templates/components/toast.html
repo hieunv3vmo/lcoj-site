@@ -1,0 +1,93 @@
+{# Toast Notification System #}
+
+{# Toast Container - Add to base template #}
+{% macro toast_container() %}
+<div class="fixed top-4 right-4 z-50 space-y-2 max-w-sm"
+     x-data
+     role="region"
+     aria-live="polite"
+     aria-label="Notifications">
+    <template x-for="toast in $store.toasts.items" :key="toast.id">
+        <div x-data="toast(toast)"
+             @mouseenter="pause()"
+             @mouseleave="resume()"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 transform translate-x-full"
+             x-transition:enter-end="opacity-100 transform translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 transform translate-x-0"
+             x-transition:leave-end="opacity-0 transform translate-x-full"
+             :class="[typeClasses.bg, typeClasses.border]"
+             class="relative border rounded-lg shadow-lg overflow-hidden"
+             role="alert">
+
+            {# Content #}
+            <div class="p-4">
+                <div class="flex items-start">
+                    {# Icon #}
+                    <div :class="typeClasses.icon" class="flex-shrink-0" x-html="toast.icon"></div>
+
+                    {# Message #}
+                    <div class="ml-3 flex-1">
+                        <h3 x-show="toast.title"
+                            x-text="toast.title"
+                            :class="typeClasses.text"
+                            class="text-sm font-semibold"></h3>
+                        <p x-show="toast.message"
+                           x-text="toast.message"
+                           :class="typeClasses.text"
+                           class="text-sm mt-1"
+                           :class="{ 'mt-0': !toast.title }"></p>
+
+                        {# Action Button #}
+                        <button x-show="toast.action"
+                                @click="toast.action.onClick(); dismiss()"
+                                class="text-sm font-medium underline mt-2 hover:no-underline"
+                                :class="typeClasses.text"
+                                x-text="toast.action?.text"></button>
+                    </div>
+
+                    {# Dismiss Button #}
+                    <button x-show="toast.dismissible"
+                            @click="dismiss()"
+                            :class="typeClasses.text"
+                            class="ml-3 flex-shrink-0 hover:opacity-75 transition-opacity">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            {# Progress Bar #}
+            <div x-show="toast.duration > 0"
+                 class="h-1 bg-gray-200">
+                <div :class="typeClasses.progress"
+                     class="h-full transition-all duration-100 ease-linear"
+                     :style="{ width: progress + '%' }"></div>
+            </div>
+        </div>
+    </template>
+</div>
+{% endmacro %}
+
+{# Toast Helper Functions (JavaScript) #}
+{% macro toast_script() %}
+<script>
+    // Shorthand functions available globally
+    window.showToast = {
+        success: (message, title = 'Success') => {
+            window.toast.success(message, title);
+        },
+        error: (message, title = 'Error') => {
+            window.toast.error(message, title);
+        },
+        warning: (message, title = 'Warning') => {
+            window.toast.warning(message, title);
+        },
+        info: (message, title = 'Info') => {
+            window.toast.info(message, title);
+        }
+    };
+</script>
+{% endmacro %}
