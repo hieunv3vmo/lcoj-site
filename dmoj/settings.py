@@ -297,7 +297,8 @@ TERMS_OF_SERVICE_URL = None
 DEFAULT_USER_LANGUAGE = 'CPP20'
 
 INLINE_JQUERY = True
-INLINE_FONTAWESOME = True
+# FontAwesome loaded from CDN - local files not available
+INLINE_FONTAWESOME = False
 JQUERY_JS = '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'
 FONTAWESOME_CSS = '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'
 DMOJ_CANONICAL = 'oj.luyencode.net'
