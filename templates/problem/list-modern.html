@@ -6,7 +6,7 @@
 {% import "components/tables.html" as table %}
 
 {% block meta %}
-<link rel="stylesheet" href="{{ static('libs/nouislider.min.css') }}">
+{# noUiSlider loaded globally via CDN in base.html #}
 <noscript>
     <style>
         #category,
@@ -68,7 +68,7 @@
             });
     });
 </script>
-<script src="{{ static('libs/nouislider.min.js') }}" type="text/javascript"></script>
+{# noUiSlider loaded globally via CDN in base.html #}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         var form = document.getElementById('filter-form');

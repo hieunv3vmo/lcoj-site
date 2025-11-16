@@ -1,7 +1,7 @@
 {% extends "common-content.html" %}
 
 {% block media %}
-<link rel="stylesheet" href="{{ static('libs/nouislider.min.css') }}">
+{# noUiSlider loaded globally via CDN in base.html #}
 <noscript>
     <style>
         #category,
@@ -87,7 +87,7 @@
     });
 </script>
 {% compress js %}
-<script src="{{ static('libs/nouislider.min.js') }}" type="text/javascript"></script>
+{# noUiSlider loaded globally via CDN in base.html #}
 <script>
     $(function () {
         var $form = $('form#filter-form');

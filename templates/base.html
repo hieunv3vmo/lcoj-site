@@ -86,6 +86,10 @@
     {% endif %}
     {% block media %}{% endblock %}
 
+    {# Vite Assets - Modern Build Pipeline #}
+    {% import "vite-assets.html" as vite %}
+    {{ vite.setup() }}
+
     {# Global CDN Libraries - All missing libraries now available via CDN #}
     {% set use_featherlight = true %}
     {% set use_chartjs = true %}
