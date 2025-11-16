@@ -1,0 +1,426 @@
+{% import "components/buttons.html" as btn %}
+{% import "components/badges.html" as badge %}
+
+{# Submit Button #}
+<div class="card">
+    {% if request.user.is_authenticated and request.in_contest and submission_limit %}
+        {% if submissions_left > 0 %}
+            <a href="{{ url('problem_submit', problem.code) }}" class="btn btn-primary w-full">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                </svg>
+                {{ _('Submit solution') }}
+            </a>
+            <div class="mt-2 text-sm text-center">
+                <span class="inline-flex items-center gap-1 bg-warning-100 text-warning-800 px-3 py-1 rounded-lg font-medium">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    {% trans trimmed counter=submissions_left %}
+                        {{ counter }} submission left
+                        {% pluralize %}
+                        {{ counter }} submissions left
+                    {% endtrans %}
+                </span>
+            </div>
+        {% else %}
+            <button disabled class="btn btn-primary w-full opacity-50 cursor-not-allowed">
+                {{ _('Submit solution') }}
+            </button>
+            <div class="mt-2 text-sm text-center text-error-600 font-medium">
+                {{ _('0 submissions left') }}
+            </div>
+        {% endif %}
+    {% else %}
+        <a href="{{ url('problem_submit', problem.code) }}" class="btn btn-primary w-full">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+            </svg>
+            {{ _('Submit solution') }}
+        </a>
+    {% endif %}
+</div>
+
+{# Quick Links #}
+<div class="card">
+    <h3 class="font-semibold text-gray-900 mb-3">{{ _('Quick Links') }}</h3>
+    <div class="space-y-2">
+        {% if request.in_contest and contest_problem %}
+            {% set contest = contest_problem.contest %}
+            <a href="{{ url('contest_user_submissions', contest.key, request.user.username, problem.code) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('My submissions') }}
+            </a>
+            {% if contest.can_see_full_submission_list(request.user) %}
+                <a href="{{ url('chronological_submissions', problem.code) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('All submissions') }}
+                </a>
+                <a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    {{ _('Best submissions') }}
+                </a>
+            {% endif %}
+        {% else %}
+            {% if request.user.is_authenticated and has_submissions %}
+                <a href="{{ url('user_submissions', problem.code, request.user.username) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('My submissions') }}
+                </a>
+            {% endif %}
+            <a href="{{ url('chronological_submissions', problem.code) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('All submissions') }}
+            </a>
+            <a href="{{ url('ranked_submissions', problem.code) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                {{ _('Best submissions') }}
+            </a>
+        {% endif %}
+
+        {% if (editorial and editorial.is_accessible_by(request.user)) and not request.in_contest %}
+            <a href="{{ url('problem_editorial', problem.code) }}" class="flex items-center gap-2 text-sm text-success-700 hover:text-success-800 font-medium transition-colors">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/>
+                </svg>
+                {{ _('Read editorial') }}
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+{# Admin Actions #}
+{% if can_edit_problem or (request.user.is_authenticated and has_tickets) or perms.judge.edit_type_group_all_problem or problem.is_subs_manageable_by(request.user) or (perms.judge.clone_problem and can_edit_problem) %}
+<div class="card">
+    <h3 class="font-semibold text-gray-900 mb-3">{{ _('Admin Actions') }}</h3>
+    <div class="space-y-2">
+        {% if can_edit_problem %}
+            <a href="{{ url('problem_ticket_list', problem.code) }}" class="flex items-center justify-between text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('Manage tickets') }}
+                </span>
+                {% if num_open_tickets %}
+                    <span class="bg-error-100 text-error-800 px-2 py-0.5 rounded-full text-xs font-semibold">{{ num_open_tickets }}</span>
+                {% endif %}
+            </a>
+            <a href="{{ url('problem_edit', problem.code) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                </svg>
+                {{ _('Edit problem') }}
+            </a>
+            {% if not problem.is_manually_managed %}
+                <a href="{{ url('problem_data', problem.code) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('Edit test data') }}
+                </a>
+            {% endif %}
+        {% elif request.user.is_authenticated and has_tickets %}
+            <a href="{{ url('problem_ticket_list', problem.code) }}" class="flex items-center justify-between text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('My tickets') }}
+                </span>
+                {% if num_open_tickets %}
+                    <span class="bg-error-100 text-error-800 px-2 py-0.5 rounded-full text-xs font-semibold">{{ num_open_tickets }}</span>
+                {% endif %}
+            </a>
+        {% endif %}
+
+        {% if perms.judge.edit_type_group_all_problem %}
+            <a href="{{ url('problem_edit_type_group', problem.code) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('Edit type group') }}
+            </a>
+        {% endif %}
+
+        {% if problem.is_subs_manageable_by(request.user) %}
+            <a href="{{ url('problem_manage_submissions', problem.code) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('Manage submissions') }}
+            </a>
+        {% endif %}
+
+        {% if perms.judge.clone_problem and can_edit_problem %}
+            <a href="{{ url('problem_clone', problem.code) }}" class="flex items-center gap-2 text-sm text-gray-700 hover:text-primary-600 transition-colors">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z"/>
+                    <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z"/>
+                </svg>
+                {{ _('Clone problem') }}
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{# Problem Information #}
+<div class="card">
+    <h3 class="font-semibold text-gray-900 mb-3">{{ _('Problem Information') }}</h3>
+    <div class="space-y-3 text-sm">
+        {# Points #}
+        <div class="flex items-start justify-between">
+            <span class="flex items-center gap-2 text-gray-600">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('Points:') }}
+            </span>
+            <span class="font-semibold text-gray-900">
+                {% if contest_problem %}
+                    {{ contest_problem.points }}{% if contest_problem.partial %} <span class="text-gray-500">{{ _('(partial)') }}</span>{% endif %}
+                {% else %}
+                    {{ problem.points|floatformat(2) }}{% if problem.partial %} <span class="text-gray-500">{{ _('(partial)') }}</span>{% endif %}
+                {% endif %}
+            </span>
+        </div>
+
+        {# Time Limit #}
+        <div class="flex items-start justify-between">
+            <span class="flex items-center gap-2 text-gray-600">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('Time limit:') }}
+            </span>
+            <span class="font-mono font-semibold text-gray-900">{{ problem.time_limit }}s</span>
+        </div>
+
+        {# Language-specific time limits #}
+        {% for name, limit in problem.language_time_limit %}
+            <div class="flex items-center justify-between pl-6 text-xs text-gray-500">
+                <span>{{ name }}</span>
+                <span class="font-mono">{{ limit }}s</span>
+            </div>
+        {% endfor %}
+
+        {# Memory Limit #}
+        <div class="flex items-start justify-between">
+            <span class="flex items-center gap-2 text-gray-600">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                </svg>
+                {{ _('Memory limit:') }}
+            </span>
+            <span class="font-mono font-semibold text-gray-900">{{ problem.memory_limit|kbsimpleformat }}</span>
+        </div>
+
+        {# Language-specific memory limits #}
+        {% for name, limit in problem.language_memory_limit %}
+            <div class="flex items-center justify-between pl-6 text-xs text-gray-500">
+                <span>{{ name }}</span>
+                <span class="font-mono">{{ limit|kbsimpleformat }}</span>
+            </div>
+        {% endfor %}
+
+        {# I/O Method #}
+        {% if problem.io_method.method == 'standard' %}
+            <div class="flex items-start justify-between">
+                <span class="flex items-center gap-2 text-gray-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('Input:') }}
+                </span>
+                <span class="font-mono font-semibold text-gray-900">stdin</span>
+            </div>
+            <div class="flex items-start justify-between">
+                <span class="flex items-center gap-2 text-gray-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('Output:') }}
+                </span>
+                <span class="font-mono font-semibold text-gray-900">stdout</span>
+            </div>
+        {% elif problem.io_method.method == 'file' %}
+            <div class="flex items-start justify-between">
+                <span class="flex items-center gap-2 text-gray-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('Input:') }}
+                </span>
+                <span class="font-mono text-gray-900">{{ problem.io_method.input }}</span>
+            </div>
+            <div class="flex items-start justify-between">
+                <span class="flex items-center gap-2 text-gray-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('Output:') }}
+                </span>
+                <span class="font-mono text-gray-900">{{ problem.io_method.output }}</span>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# Authors & Source #}
+{% if not contest_problem or not contest_problem.contest.hide_problem_authors %}
+    {% cache 86400 'problem_authors' problem.id LANGUAGE_CODE %}
+        {% with authors=problem.authors.all() %}
+            {% if authors or problem.suggester or problem.source %}
+            <div class="card">
+                <h3 class="font-semibold text-gray-900 mb-3">{{ _('Credits') }}</h3>
+                <div class="space-y-3 text-sm">
+                    {% if authors %}
+                        <div>
+                            <div class="flex items-center gap-2 text-gray-600 mb-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                                </svg>
+                                {% trans trimmed count=authors|length %}
+                                    Author:
+                                    {% pluralize count %}
+                                    Authors:
+                                {% endtrans %}
+                            </div>
+                            <div class="text-gray-900">{{ link_users(authors) }}</div>
+                        </div>
+                    {% endif %}
+                    {% if problem.suggester %}
+                        <div>
+                            <div class="flex items-center gap-2 text-gray-600 mb-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ _("Suggester:") }}
+                            </div>
+                            <div class="text-gray-900">{{ link_user(problem.suggester) }}</div>
+                        </div>
+                    {% endif %}
+                    {% if problem.source %}
+                        <div>
+                            <div class="flex items-center gap-2 text-gray-600 mb-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ _('Problem source:') }}
+                            </div>
+                            <div class="text-gray-900">{{ problem.source }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        {% endwith %}
+    {% endcache %}
+{% endif %}
+
+{# Problem Types #}
+{% if not contest_problem or not contest_problem.contest.hide_problem_tags %}
+    <div class="card" x-data="{ typesOpen: false }">
+        <button
+            @click="typesOpen = !typesOpen"
+            class="w-full flex items-center justify-between text-left"
+        >
+            <h3 class="font-semibold text-gray-900">
+                {% trans trimmed count=problem.types_list|length %}
+                    Problem type
+                    {% pluralize count %}
+                    Problem types
+                {% endtrans %}
+            </h3>
+            <svg
+                class="w-5 h-5 text-gray-500 transition-transform"
+                :class="{ 'rotate-90': typesOpen }"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+            >
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+        </button>
+        <div x-show="typesOpen" x-collapse class="mt-3">
+            <div class="flex flex-wrap gap-2">
+                {% for type in problem.types_list %}
+                    <span class="bg-primary-100 text-primary-800 px-2 py-1 rounded text-xs font-medium">{{ type }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{# Allowed Languages #}
+{% if show_languages %}
+    <div class="card" x-data="{ langsOpen: true }">
+        <button
+            @click="langsOpen = !langsOpen"
+            class="w-full flex items-center justify-between text-left"
+        >
+            <h3 class="font-semibold text-gray-900">{{ _('Allowed languages') }}</h3>
+            <svg
+                class="w-5 h-5 text-gray-500 transition-transform"
+                :class="{ 'rotate-90': langsOpen }"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+            >
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+        </button>
+        <div x-show="langsOpen" x-collapse class="mt-3 text-sm text-gray-700">
+            {% with usable=problem.usable_common_names, langs=problem.languages_list() %}
+                {% for lang in langs %}
+                    {%- if lang in usable -%}
+                        <span>{{ lang }}</span>
+                    {%- else -%}
+                        <span class="line-through text-gray-400" title="{{ _('No %(lang)s judge online', lang=lang) }}">{{ lang }}</span>
+                    {%- endif -%}
+                    {% if not loop.last %}, {% endif -%}
+                {% endfor %}
+            {% endwith %}
+        </div>
+    </div>
+{% endif %}
+
+{# Available Judges (Admin only) #}
+{% if problem.is_editable_by(request.user) %}
+    <div class="card">
+        <h3 class="font-semibold text-gray-900 mb-2">
+            {% trans trimmed count=available_judges|length %}
+                Judge:
+                {% pluralize count %}
+                Judges:
+            {% endtrans %}
+        </h3>
+        <div class="text-sm text-gray-700">
+            {% if available_judges %}
+                {% if perms.judge.change_judge %}
+                    {% for judge in available_judges %}
+                        <a href="{{ url('admin:judge_judge_change', judge.id) }}" class="text-primary-600 hover:text-primary-700">{{ judge.name }}</a>
+                        {%- if not loop.last %}, {% endif %}
+                    {% endfor %}
+                {% else %}
+                    {{ available_judges|join(", ") }}
+                {% endif %}
+            {% else %}
+                <span class="text-gray-500 italic">{{ _('none available') }}</span>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}

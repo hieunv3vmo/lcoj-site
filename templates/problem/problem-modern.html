@@ -1,0 +1,278 @@
+{% extends "base-modern.html" %}
+{% import "components/cards.html" as card %}
+{% import "components/badges.html" as badge %}
+{% import "components/buttons.html" as btn %}
+{% import "components/alerts.html" as alert %}
+
+{% block meta %}
+    {% if not comment_lock %}
+        {% include "comments/media-css.html" %}
+    {% endif %}
+    <style>
+        #raw_problem {
+            visibility: hidden;
+            width: 0;
+            height: 0;
+            position: absolute;
+            left: -999em;
+        }
+
+        /* Code block styling */
+        .content-description pre {
+            @apply bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto;
+        }
+
+        .content-description code {
+            @apply font-mono text-sm;
+        }
+
+        /* Copy button positioning */
+        .copy-clipboard {
+            @apply relative;
+        }
+
+        .btn-clipboard {
+            @apply absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm cursor-pointer transition-colors;
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    {% if not comment_lock %}
+        {% include "comments/media-js.html" %}
+    {% endif %}
+
+    <script src="{{ static('libs/clipboard/clipboard.js') }}"></script>
+    <script src="{{ static('libs/clipboard/tooltip.js') }}"></script>
+
+    <script type="text/javascript">
+        // PDF print functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const pdfButton = document.getElementById('pdf_button');
+            if (pdfButton) {
+                pdfButton.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const rawProblem = document.getElementById('raw_problem');
+                    if (!rawProblem.getAttribute('src')) {
+                        rawProblem.setAttribute('src', "{{ problem.code }}/raw");
+                    }
+
+                    while(!rawProblem.contentWindow.document.querySelector('.math-loaded')) {
+                        await new Promise(r => setTimeout(r, 200));
+                    }
+                    rawProblem.contentWindow.print();
+                });
+            }
+
+            // Code copy buttons
+            window.add_code_copy_buttons = function (container) {
+                container.querySelectorAll('pre code').forEach(function (codeBlock) {
+                    const pre = codeBlock.parentElement;
+                    const copyDiv = document.createElement('div');
+                    copyDiv.className = 'copy-clipboard';
+
+                    const copyButton = document.createElement('span');
+                    copyButton.className = 'btn-clipboard';
+                    copyButton.setAttribute('data-clipboard-text', codeBlock.textContent);
+                    copyButton.setAttribute('title', '{{ _('Click to copy') }}');
+                    copyButton.textContent = '{{ _('Copy') }}';
+
+                    copyButton.addEventListener('mouseleave', function () {
+                        this.className = 'btn-clipboard';
+                        this.removeAttribute('aria-label');
+                    });
+
+                    copyDiv.appendChild(copyButton);
+                    pre.parentNode.insertBefore(copyDiv, pre);
+
+                    const clipboard = new Clipboard(copyButton);
+
+                    clipboard.on('success', function (e) {
+                        e.clearSelection();
+                        copyButton.textContent = '{{ _('Copied!') }}';
+                        copyButton.className = 'btn-clipboard bg-success-600';
+                    });
+
+                    clipboard.on('error', function (e) {
+                        copyButton.textContent = '{{ _('Error') }}';
+                        copyButton.className = 'btn-clipboard bg-error-600';
+                    });
+                });
+            };
+
+            window.add_code_copy_buttons(document);
+        });
+    </script>
+{% endblock %}
+
+{% block title_row %}
+<div class="mb-6">
+    {# Problem Title with Status #}
+    <div class="flex items-start gap-4 mb-4">
+        {% if request.user.is_authenticated %}
+            {% if problem.id in completed_problem_ids %}
+                <a href="{{ url('user_submissions', problem.code, request.user.username) }}" class="flex-shrink-0" title="{{ _('Solved') }}">
+                    {% if problem.is_public or request.in_contest %}
+                        <svg class="w-12 h-12 text-success-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    {% else %}
+                        <svg class="w-12 h-12 text-success-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                        </svg>
+                    {% endif %}
+                </a>
+            {% elif problem.id in attempted_problems %}
+                <a href="{{ url('user_submissions', problem.code, request.user.username) }}" class="flex-shrink-0" title="{{ _('Attempted') }}">
+                    {% if problem.is_public or request.in_contest %}
+                        <svg class="w-12 h-12 text-warning-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                    {% else %}
+                        <svg class="w-12 h-12 text-warning-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                        </svg>
+                    {% endif %}
+                </a>
+            {% endif %}
+        {% endif %}
+
+        <div class="flex-1 min-w-0">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                <span class="font-mono text-primary-600">{{ problem.code|upper }}</span>
+                <span class="mx-2">-</span>
+                <span>{{ title }}</span>
+            </h1>
+
+            {# Organization Tags #}
+            {% if problem.is_organization_private %}
+                <div class="flex flex-wrap gap-2 mb-3">
+                    {% for org in problem.organizations.all() %}
+                        <a href="{{ org.get_absolute_url() }}" class="inline-flex items-center gap-1 bg-warning-100 text-warning-800 px-3 py-1 rounded-lg text-sm font-medium">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                            </svg>
+                            {{ org.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# PDF Link #}
+            <div>
+                {% if has_pdf_render %}
+                    <a href="{{ url('problem_pdf', problem.code) }}" class="inline-flex items-center gap-2 text-error-600 hover:text-error-700 font-medium">
+                {% else %}
+                    <a id="pdf_button" href='#' class="inline-flex items-center gap-2 text-error-600 hover:text-error-700 font-medium">
+                {% endif %}
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ _('View as PDF') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="lg:grid lg:grid-cols-4 lg:gap-6">
+    {# Sidebar - Desktop #}
+    <div class="hidden lg:block lg:col-span-1">
+        <div class="sticky top-20 space-y-4">
+            {% include "problem/problem-sidebar-modern.html" %}
+        </div>
+    </div>
+
+    {# Mobile Sidebar - Collapsible #}
+    <div class="lg:hidden mb-6" x-data="{ sidebarOpen: false }">
+        <button
+            @click="sidebarOpen = !sidebarOpen"
+            class="btn btn-outline w-full"
+        >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            {{ _('Problem Info & Actions') }}
+        </button>
+
+        <div x-show="sidebarOpen" x-transition class="mt-4">
+            {% include "problem/problem-sidebar-modern.html" %}
+        </div>
+    </div>
+
+    {# Main Content #}
+    <div class="lg:col-span-3">
+        {# Suggestion Alert #}
+        {% if problem.is_suggesting %}
+            {{ alert.warning(
+                _('This problem is only a suggestion!'),
+                _('This problem cannot be accessed by normal users until it is approved by an admin or staff. Please make sure that all the data for this problem is correct.')
+            ) }}
+        {% endif %}
+
+        {# Problem Description #}
+        <div class="card prose max-w-none">
+            <iframe name="raw_problem" id="raw_problem"></iframe>
+            {% include "problem/problem-detail.html" %}
+        </div>
+
+        {# Issue Report Button #}
+        <div class="mt-6">
+            {% if request.user.is_authenticated and not request.profile.mute %}
+                <a href="{{ url('new_problem_ticket', problem.code) }}" class="btn btn-warning">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    {%- if comment_lock and request.profile.current_contest.live -%}
+                        {{ _('Request clarification') }}
+                    {%- else -%}
+                        {{ _('Report an issue') }}
+                    {%- endif -%}
+                </a>
+            {% endif %}
+        </div>
+
+        {# Comments/Clarifications #}
+        <div class="mt-8">
+            {% if comment_lock %}
+                <div class="card">
+                    <h2 class="card-title flex items-center gap-2 mb-6">
+                        <svg class="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ _('Clarifications') }}
+                    </h2>
+                    {% if has_clarifications %}
+                        <div class="space-y-4">
+                            {% for clarification in clarifications %}
+                                <div class="border-b border-gray-200 last:border-0 pb-4 last:pb-0">
+                                    <div class="text-sm text-gray-500 mb-2">{{ relative_time(clarification.date) }}</div>
+                                    <div class="prose max-w-none">
+                                        {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500 text-center py-8">{{ _('No clarifications have been made at this time.') }}</p>
+                    {% endif %}
+                </div>
+            {% else %}
+                {% with comment_warn_code=true %}
+                    {% include "comments/list.html" %}
+                {% endwith %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block bodyend %}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
+{% endblock %}
