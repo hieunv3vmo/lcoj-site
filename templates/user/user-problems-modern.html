@@ -1,0 +1,196 @@
+{% extends "user/user-base-modern.html" %}
+
+{% block user_js_media %}
+    <script type="text/javascript">
+        window.show_pp_base = 1;
+        window.currently_requesting_pp = false;
+        window.load_more_pp = function () {
+            if (window.currently_requesting_pp) return;
+            window.currently_requesting_pp = true;
+
+            $.get('{{ url('user_pp_ajax', user.user.username) }}', {
+                start: window.show_pp_base * 10,
+                end: (window.show_pp_base + 1) * 10
+            }).done(function (data) {
+                var results = $(data['results']);
+                $('.pp-table').append(results);
+                register_time(results.find('.time-with-rel'));
+                window.show_pp_base++;
+                if (!data['has_more']) {
+                    $("#pp-load-link-wrapper").hide();
+                }
+                window.currently_requesting_pp = false;
+            });
+        };
+    </script>
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'problems' %}
+    {% include "user/user-tabs-modern.html" %}
+{% endblock %}
+
+{% block user_content %}
+    <div class="space-y-6">
+        {# Points Breakdown #}
+        {% if pp_breakdown %}
+            <div class="card">
+                <h3 class="card-title">{{ _('Points breakdown') }}</h3>
+                <div id="submissions-table" class="pp-table overflow-x-auto">
+                    <table class="table table-striped w-full">
+                        {% include "user/pp-table-body.html" %}
+                    </table>
+                </div>
+
+                {% if pp_has_more %}
+                    <div id="pp-load-link-wrapper" class="mt-4 text-center">
+                        <a
+                            id="pp-load-more-link"
+                            href="javascript:load_more_pp()"
+                            class="btn btn-outline"
+                        >
+                            {{ _('Load more...') }}
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="card text-center py-12">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p class="text-gray-500">{{ _('This user has not yet solved any problems.') }}</p>
+            </div>
+        {% endif %}
+
+        {# Authored Problems #}
+        {% if authored %}
+            <div class="card" x-data="{ open: false }">
+                <button
+                    @click="open = !open"
+                    class="flex items-center justify-between w-full text-left"
+                >
+                    <h3 class="text-lg font-bold text-gray-900">
+                        <svg
+                            class="w-4 h-4 inline-block mr-2 transition-transform"
+                            :class="{ 'rotate-90': open }"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ _('Authored problems') }} ({{ authored|length }})
+                    </h3>
+                </button>
+
+                <div x-show="open" x-collapse class="mt-4">
+                    <div class="overflow-x-auto">
+                        <table class="table table-striped w-full">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Problem') }}</th>
+                                    <th>{{ _('Category') }}</th>
+                                    <th class="text-right">{{ _('Points') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for problem in authored %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td>
+                                            <a href="{{ url('problem_detail', problem.code) }}" class="text-primary-600 hover:text-primary-700 font-medium">
+                                                {{ problem.name }}
+                                            </a>
+                                        </td>
+                                        <td class="text-gray-600">{{ problem.group.full_name }}</td>
+                                        <td class="text-right">
+                                            <a href="{{ url('ranked_submissions', problem.code) }}" class="text-primary-600 hover:text-primary-700 font-semibold">
+                                                {{ problem.points|floatformat }}{% if problem.partial %}p{% endif %}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {# Hide Solved Problems Toggle #}
+        {% if request.user.is_authenticated and request.user != user.user %}
+            <div class="card">
+                <form name="form" action="" method="get">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input
+                            id="hide_solved"
+                            type="checkbox"
+                            name="hide_solved"
+                            value="1"
+                            {% if hide_solved %}checked{% endif %}
+                            onclick="form.submit()"
+                            class="rounded text-primary-600 focus:ring-primary-500"
+                        >
+                        <span class="text-sm text-gray-700">{{ _("Hide problems I've solved") }}</span>
+                    </label>
+                </form>
+            </div>
+        {% endif %}
+
+        {# Best Submissions by Category #}
+        {% for group in best_submissions %}
+            <div class="card" x-data="{ open: false }">
+                <button
+                    @click="open = !open"
+                    class="flex items-center justify-between w-full text-left"
+                >
+                    <h3 class="text-lg font-bold text-gray-900">
+                        <svg
+                            class="w-4 h-4 inline-block mr-2 transition-transform"
+                            :class="{ 'rotate-90': open }"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        {%- with points_str=group.points|floatformat(-3) -%}
+                            {{ _('%(group)s (%(val)s points)', group=group.name, val=points_str) }}
+                        {%- endwith -%}
+                    </h3>
+                </button>
+
+                <div x-show="open" x-collapse class="mt-4">
+                    <div class="overflow-x-auto">
+                        <table class="table table-striped w-full">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Problem') }}</th>
+                                    <th class="text-right">{{ _('Score') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in group.problems %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td>
+                                            <a href="{{ url('problem_detail', entry.code) }}" class="text-primary-600 hover:text-primary-700 font-medium">
+                                                {{ entry.name }}
+                                            </a>
+                                        </td>
+                                        <td class="text-right">
+                                            <a href="{{ url('user_submissions', entry.code, user.user.username) }}" class="text-gray-900 hover:text-primary-600 font-semibold">
+                                                {%- with points_str=entry.points|floatformat(-3), total_str=entry.total|floatformat(-3) -%}
+                                                    {{ _('%(points)s / %(total)s', points=points_str, total=total_str) }}
+                                                {%- endwith -%}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% set can_view, can_edit = submission_layout(submission, profile_id, request.user, completed_problem_ids, editable_problem_ids, tester_problem_ids) %}
+
+<div class="card hover:shadow-md transition-shadow">
+    <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+        {# Status & Score #}
+        <div class="flex items-center gap-4 lg:w-48 flex-shrink-0">
+            {# Score #}
+            <div class="text-center">
+                <div class="text-2xl font-bold {{ submission.result_class_color }}">
+                    {%- if submission.is_graded -%}
+                        {%- if submission.status in ('IE', 'CE', 'AB') -%}
+                            <span class="text-gray-400">---</span>
+                        {%- else -%}
+                            {{ submission.case_points|floatformat(-1) }}
+                        {%- endif -%}
+                    {%- else -%}
+                        <svg class="w-6 h-6 text-primary-600 animate-spin mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    {%- endif -%}
+                </div>
+                {%- if submission.is_graded and submission.status not in ('IE', 'CE', 'AB') -%}
+                    <div class="text-xs text-gray-500">/ {{ submission.case_total|floatformat(0) }}</div>
+                {%- endif -%}
+            </div>
+
+            {# Status Badge #}
+            <div class="flex-1">
+                <span class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium {{ submission.result_class_badge }}"
+                      title="{{ submission.long_status }}">
+                    {{ submission.short_status }}
+                </span>
+                <div class="text-xs text-gray-600 mt-1">
+                    {{ submission.language.short_display_name }}
+                </div>
+            </div>
+        </div>
+
+        {# Main Info #}
+        <div class="flex-1 min-w-0{% if submission.status == 'G' %} opacity-75{% endif %}">
+            {% if show_problem %}
+                <div class="mb-2">
+                    <a href="{{ url('problem_detail', submission.problem.code) }}"
+                       class="text-lg font-semibold text-gray-900 hover:text-primary-600">
+                        {{ problem_name }}
+                    </a>
+                </div>
+            {% endif %}
+
+            <div class="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                <span class="font-medium">{{ link_user(submission.user) }}</span>
+                <span class="text-gray-400">•</span>
+                <span class="time">{{ relative_time(submission.date) }}</span>
+
+                {% if not request.in_contest and submission.contest_object_id %}
+                    <span class="text-gray-400">•</span>
+                    <a href="{{ url('contest_view', submission.contest_object.key) }}"
+                       class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700"
+                       title="{{ submission.contest_object.name }}">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ _('Contest') }}
+                    </a>
+                {% endif %}
+            </div>
+
+            {% if submission.status == 'G' and (request.user.is_superuser or submission.problem.testcase_result_visibility_mode == 'A') %}
+                <div class="mt-2 text-sm text-primary-600">
+                    {%- if submission.current_testcase > 0 -%}
+                        {{ _('Case #%(case)s', case=submission.current_testcase) }}
+                    {%- else -%}
+                        ...
+                    {%- endif -%}
+                </div>
+            {% endif %}
+        </div>
+
+        {# Actions #}
+        {% if can_view %}
+            <div class="flex flex-wrap gap-3 text-sm lg:flex-shrink-0">
+                <a href="{{ url('submission_status', submission.id) }}"
+                   class="inline-flex items-center gap-1 text-gray-600 hover:text-primary-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>{{ _('view') }}</span>
+                </a>
+
+                {% if not submission.language.file_only %}
+                    <a href="{{ url('submission_source', submission.id) }}"
+                       class="inline-flex items-center gap-1 text-gray-600 hover:text-primary-600">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>{{ _('source') }}</span>
+                    </a>
+                {% else %}
+                    <a href="{{ url('submission_source_download', submission.id) }}"
+                       class="inline-flex items-center gap-1 text-gray-600 hover:text-primary-600">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>{{ _('download') }}</span>
+                    </a>
+                {% endif %}
+
+                {% if perms.judge.rejudge_submission and can_edit %}
+                    {% if not submission.is_locked %}
+                        <a href="#"
+                           onclick="rejudge_submission({{ submission.id }}, event);return false"
+                           class="inline-flex items-center gap-1 text-gray-600 hover:text-accent-600">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>{{ _('rejudge') }}</span>
+                        </a>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1 text-gray-400"
+                              title="{{ _('This submission has been locked, and cannot be rejudged.') }}">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>{{ _('locked') }}</span>
+                        </span>
+                    {% endif %}
+                {% endif %}
+
+                {% if can_edit %}
+                    {% if not submission.language.file_only %}
+                        <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}"
+                           class="inline-flex items-center gap-1 text-gray-600 hover:text-primary-600">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"/>
+                                <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+                            </svg>
+                            <span>{{ _('diff') }}</span>
+                        </a>
+                    {% endif %}
+
+                    {% if request.user.is_superuser %}
+                        <a href="{{ url('admin:judge_submission_change', submission.id) }}"
+                           class="inline-flex items-center gap-1 text-gray-600 hover:text-primary-600">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>{{ _('admin') }}</span>
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {# Time & Memory #}
+        <div class="flex gap-4 lg:w-32 lg:flex-shrink-0 text-sm">
+            {% if submission.status in ('QU', 'P', 'G', 'CE', 'IE', 'AB') or not (request.user.is_superuser or submission.problem.testcase_result_visibility_mode == 'A') %}
+                <div class="text-gray-400">
+                    <div class="font-mono">---</div>
+                    <div class="text-xs">{{ _('Time') }}</div>
+                </div>
+                <div class="text-gray-400">
+                    <div class="font-mono">---</div>
+                    <div class="text-xs">{{ _('Memory') }}</div>
+                </div>
+            {% else %}
+                <div class="{{ 'text-gray-900' if submission.result != 'TLE' else 'text-gray-400' }}">
+                    <div class="font-mono" title="{{ submission.time or 0 }}s">
+                        {% if "TLE" != submission.result %}
+                            {{ (submission.time or 0)|floatformat(2) }}s
+                        {% else %}
+                            ---
+                        {% endif %}
+                    </div>
+                    <div class="text-xs text-gray-500">{{ _('Time') }}</div>
+                </div>
+                <div class="text-gray-900">
+                    <div class="font-mono">{{ submission.memory|kbdetailformat }}</div>
+                    <div class="text-xs text-gray-500">{{ _('Memory') }}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

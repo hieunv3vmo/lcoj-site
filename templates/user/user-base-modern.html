@@ -1,0 +1,134 @@
+{% extends "base-modern.html" %}
+
+{% block meta %}
+    {% block user_meta %}{% endblock %}
+{% endblock %}
+
+{% block js_media %}
+    {% block user_js_media %}{% endblock %}
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "user/user-tabs-modern.html" %}
+{% endblock %}
+
+{% block body %}
+    <div class="lg:grid lg:grid-cols-4 lg:gap-6">
+        {# Sidebar #}
+        <div class="lg:col-span-1 mb-6 lg:mb-0">
+            <div class="card lg:sticky lg:top-20">
+                {# Avatar #}
+                <div class="flex flex-col items-center mb-6">
+                    <img
+                        src="{{ gravatar(user, 135) }}"
+                        alt="{{ user.user.username }}"
+                        class="w-32 h-32 rounded-full border-4 border-gray-100 shadow-sm mb-3"
+                    >
+                    <h2 class="text-xl font-bold text-gray-900 text-center">
+                        {{ link_user(user) }}
+                    </h2>
+
+                    {# Email (private) #}
+                    {% if user.user == request.user or request.user.is_superuser %}
+                        <div class="mt-2 text-sm text-gray-600 text-center break-words w-full px-2">
+                            <span class="font-semibold">{{ _('Email:') }}</span>
+                            <div class="text-gray-700">{{ user.user.email }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {# Stats Grid #}
+                <div class="space-y-3 border-t border-gray-200 pt-4">
+                    {# Problems Solved #}
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">{{ _('Problems solved:') }}</span>
+                        <span class="text-lg font-bold text-primary-600">{{ user.problem_count }}</span>
+                    </div>
+
+                    {# Rank by Points #}
+                    {% if not user.is_unlisted %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">{{ _('Rank by points:') }}</span>
+                            <span class="text-lg font-bold text-gray-900">#{{ rank }}</span>
+                        </div>
+                    {% endif %}
+
+                    {# Total Points #}
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">{{ _('Total points:') }}</span>
+                        <span class="text-lg font-bold text-gray-900" title="{{ user.performance_points|floatformat(2) }}">
+                            {{ user.performance_points|floatformat(0) }}
+                        </span>
+                    </div>
+
+                    {# Contribution Points #}
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">{{ _('Contribution:') }}</span>
+                        <span class="text-lg font-bold text-accent-600" title="{{ user.contribution_points }}">
+                            {{ user.contribution_points }}
+                        </span>
+                    </div>
+                </div>
+
+                {# Actions #}
+                <div class="border-t border-gray-200 pt-4 mt-4">
+                    <a
+                        href="{{ url('all_user_submissions', user.user.username) }}"
+                        class="btn btn-outline w-full"
+                    >
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ _('View submissions') }}
+                    </a>
+                </div>
+
+                {# Contest Stats #}
+                {% if ratings %}
+                    <div class="border-t border-gray-200 pt-4 mt-4 space-y-3">
+                        <div class="text-sm font-semibold text-gray-900">
+                            {%- trans trimmed counter=ratings|length %}
+                                {{ counter }} contest written
+                            {% pluralize %}
+                                {{ counter }} contests written
+                            {% endtrans -%}
+                        </div>
+
+                        {# Rank by Rating #}
+                        {% if not user.is_unlisted %}
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">{{ _('Rank by rating:') }}</span>
+                                <span class="text-lg font-bold text-gray-900">#{{ rating_rank }}</span>
+                            </div>
+                        {% endif %}
+
+                        {# Current Rating #}
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">{{ _('Rating:') }}</span>
+                            <span class="text-lg font-bold">{{ rating_number(rating) }}</span>
+                        </div>
+
+                        {# Min Rating #}
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">{{ _('Min. rating:') }}</span>
+                            <span class="text-sm font-semibold text-gray-700">{{ rating_number(min_rating) }}</span>
+                        </div>
+
+                        {# Max Rating #}
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">{{ _('Max rating:') }}</span>
+                            <span class="text-sm font-semibold text-gray-700">{{ rating_number(max_rating) }}</span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Main Content #}
+        <div class="lg:col-span-3">
+            {% block user_content %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}
