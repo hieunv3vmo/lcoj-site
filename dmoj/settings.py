@@ -117,6 +117,10 @@ VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION = False
 VNOJ_MONTHLY_FREE_CREDIT = 3 * 60 * 60
 VNOJ_PRICE_PER_HOUR = 50
 
+# Online IDE settings
+# Set to True to require users to log in before accessing the IDE
+# Set to False to allow anonymous users to use the IDE
+IDE_REQUIRE_LOGIN = False
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
