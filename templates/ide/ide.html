@@ -400,7 +400,7 @@
                         {% for lang in form.fields.language.queryset %}
                             <option value="{{ lang.id }}"
                                     data-ace="{{ lang.ace }}"
-                                    {% if form.initial.language.id == lang.id %}selected{% endif %}>
+                                    {% if form.initial.language and form.initial.language.id == lang.id %}selected{% endif %}>
                                 {{ lang.name }}
                             </option>
                         {% endfor %}
@@ -448,7 +448,7 @@
                         {% for session in user_sessions %}
                         <div class="session-item load-session-btn" data-session-id="{{ session.id }}">
                             <strong>{{ session.language.name }}</strong><br>
-                            <small>{{ session.last_modified|date:"Y-m-d H:i" }}</small>
+                            <small>{{ session.last_modified|date(_("Y-m-d H:i")) }}</small>
                         </div>
                         {% endfor %}
                     </div>
