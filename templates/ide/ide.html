@@ -14,6 +14,8 @@
 
                 // ACE Editor configuration
                 var editor = null;
+                var autoSaveTimer = null;
+
                 $('#ace_source').on('ace_load', function (e, ace_editor) {
                     editor = ace_editor;
                     editor.setTheme("ace/theme/chrome");
@@ -28,14 +30,24 @@
 
                     editor.focus();
 
-                    // Save to localStorage on Ctrl+S
+                    // Auto-save on change (debounced)
+                    editor.getSession().on('change', function() {
+                        // Clear previous timer
+                        if (autoSaveTimer) {
+                            clearTimeout(autoSaveTimer);
+                        }
+                        // Save after 2 seconds of inactivity
+                        autoSaveTimer = setTimeout(function() {
+                            saveToLocalStorage(false); // false = don't show message
+                        }, 2000);
+                    });
+
+                    // Save to localStorage on Ctrl+S (with message)
                     editor.commands.addCommand({
                         name: 'save',
                         bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
                         exec: function () {
-                            var langId = $('#id_language').val();
-                            localStorage.setItem('ide:' + langId, editor.getSession().getValue());
-                            showMessage('{{ _("Code saved to browser storage") }}', 'success');
+                            saveToLocalStorage(true); // true = show message
                         }
                     });
 
@@ -54,6 +66,9 @@
 
                 // Language change handler
                 $('#id_language').change(function () {
+                    // Save current code before switching
+                    saveToLocalStorage(false);
+
                     var lang = $("#id_language").find("option:selected").attr('data-ace');
                     if (editor && lang) {
                         editor.getSession().setMode("ace/mode/" + lang);
@@ -61,14 +76,72 @@
                     loadFromLocalStorage();
                 });
 
-                // Load code from localStorage
+                // Save code and stdin to localStorage
+                function saveToLocalStorage(showMsg) {
+                    var langId = $('#id_language').val();
+                    if (editor) {
+                        var code = editor.getSession().getValue();
+                        localStorage.setItem('ide:code:' + langId, code);
+                    }
+
+                    // Also save stdin data
+                    var stdin = $('#stdin-input').val();
+                    if (stdin) {
+                        localStorage.setItem('ide:stdin:' + langId, stdin);
+                    }
+
+                    if (showMsg) {
+                        showMessage('{{ _("Code saved to browser storage") }}', 'success');
+                    } else {
+                        // Show subtle auto-save indicator
+                        showAutoSaveIndicator();
+                    }
+                }
+
+                // Show auto-save indicator
+                function showAutoSaveIndicator() {
+                    var indicator = $('#auto-save-indicator');
+                    if (!indicator.length) {
+                        // Create indicator if it doesn't exist
+                        indicator = $('<div id="auto-save-indicator" style="position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 8px 12px; border-radius: 3px; font-size: 13px; opacity: 0; transition: opacity 0.3s; z-index: 9999;"><i class="fa fa-check"></i> {{ _("Auto-saved") }}</div>');
+                        $('body').append(indicator);
+                    }
+
+                    // Show then hide
+                    indicator.css('opacity', '1');
+                    setTimeout(function() {
+                        indicator.css('opacity', '0');
+                    }, 1500);
+                }
+
+                // Load code and stdin from localStorage
                 function loadFromLocalStorage() {
                     var langId = $('#id_language').val();
-                    var code = localStorage.getItem('ide:' + langId);
+
+                    // Load code
+                    var code = localStorage.getItem('ide:code:' + langId);
                     if (code && editor) {
                         editor.getSession().setValue(code);
                     }
+
+                    // Load stdin
+                    var stdin = localStorage.getItem('ide:stdin:' + langId);
+                    if (stdin) {
+                        $('#stdin-input').val(stdin);
+                    }
                 }
+
+                // Auto-save stdin when it changes
+                $('#stdin-input').on('input', function() {
+                    var langId = $('#id_language').val();
+                    var stdin = $(this).val();
+                    localStorage.setItem('ide:stdin:' + langId, stdin);
+                });
+
+                // Save before leaving page
+                $(window).on('beforeunload', function() {
+                    saveToLocalStorage(false);
+                });
 
                 // Tab switching for stdin/output
                 $('.ide-tab').click(function() {
@@ -197,6 +270,9 @@
 
                 // Run code function
                 function runCode() {
+                    // Save before running
+                    saveToLocalStorage(false);
+
                     var sourceCode = editor ? editor.getSession().getValue() : $('#id_source').val();
                     var languageId = $('#id_language').val();
                     var stdinData = $('#stdin-input').val();
