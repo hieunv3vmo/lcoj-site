@@ -11,11 +11,11 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.generic import FormView, View
 
-from judge.models import IDESession, Judge, Language, Submission, SubmissionSource
+from judge.models import IDESession, Judge, Language, Problem, Submission, SubmissionSource
 from judge.utils.views import TitleMixin
 from judge.widgets import AceWidget
 
-__all__ = ['OnlineIDEView', 'IDEExecuteView', 'IDESaveSessionView', 'IDELoadSessionView']
+__all__ = ['OnlineIDEView', 'IDEExecuteView', 'IDESaveSessionView', 'IDELoadSessionView', 'IDESubmissionStatusView']
 
 logger = logging.getLogger(__name__)
 
@@ -152,23 +152,74 @@ class IDEExecuteView(View):
                     'error': _('No online judge available for this language.')
                 }, status=503)
 
-            # For now, we return a simulated response
-            # In production, you would create a special IDE submission and use the judge system
-            # This requires modifications to the judge system to support stdin/stdout for IDE mode
+            # Get or create the __ide__ problem
+            try:
+                ide_problem = Problem.objects.get(code='__ide__')
+            except Problem.DoesNotExist:
+                return JsonResponse({
+                    'error': _('IDE problem not configured. Please run migrations.')
+                }, status=503)
 
-            return JsonResponse({
-                'status': 'queued',
-                'message': _('Code execution has been queued. Judge integration coming soon.'),
-                'language': language.name,
-                'code_length': len(source_code),
-                # In the future, this would return:
-                # 'submission_id': submission.id,
-                # 'stdout': output,
-                # 'stderr': errors,
-                # 'time': execution_time,
-                # 'memory': memory_used,
-                # 'exit_code': exit_code,
-            })
+            # Get user profile or use a default for anonymous users
+            # Anonymous users need a profile for submission tracking
+            if request.user.is_authenticated:
+                user_profile = request.user.profile
+            else:
+                # For anonymous users, we need to find or create a default profile
+                # This depends on your site's configuration for anonymous submissions
+                # For now, we'll require login if IDE_REQUIRE_LOGIN is True
+                from judge.models import Profile
+                try:
+                    # Try to get a system/anonymous user profile
+                    user_profile = Profile.objects.filter(user__username='ide_anonymous').first()
+                    if not user_profile:
+                        return JsonResponse({
+                            'error': _('Anonymous execution not configured. Please log in.')
+                        }, status=403)
+                except Exception:
+                    return JsonResponse({
+                        'error': _('Please log in to execute code.')
+                    }, status=403)
+
+            # Create submission for IDE execution with meta field containing stdin
+            submission = Submission(
+                user=user_profile,
+                problem=ide_problem,
+                language=language,
+                meta={'stdin': stdin_data, 'ide_mode': True},
+            )
+            submission.save()
+
+            # Create submission source
+            SubmissionSource.objects.create(
+                submission=submission,
+                source=source_code
+            )
+
+            # Submit to judge - meta will be automatically included
+            from judge.judgeapi import judge_submission
+            try:
+                success = judge_submission(
+                    submission,
+                    rejudge=False,
+                )
+
+                if not success:
+                    return JsonResponse({
+                        'error': _('Failed to submit to judge.')
+                    }, status=503)
+
+                return JsonResponse({
+                    'status': 'success',
+                    'submission_id': submission.id,
+                    'message': _('Code submitted successfully. Waiting for results...'),
+                })
+
+            except Exception as e:
+                logger.error(f'Error submitting to judge: {str(e)}', exc_info=True)
+                return JsonResponse({
+                    'error': _('Failed to submit code for execution.')
+                }, status=500)
 
         except json.JSONDecodeError:
             return JsonResponse({'error': _('Invalid JSON data.')}, status=400)
@@ -254,3 +305,84 @@ class IDELoadSessionView(View):
         except Exception as e:
             logger.error(f'Error loading IDE session: {str(e)}', exc_info=True)
             return JsonResponse({'error': _('An error occurred while loading your session.')}, status=500)
+
+
+class IDESubmissionStatusView(View):
+    """
+    API endpoint to check IDE submission status and get results.
+    """
+
+    def get(self, request, submission_id):
+        try:
+            # Get submission
+            from judge.models import SubmissionTestCase
+            submission = Submission.objects.get(id=submission_id)
+
+            # Verify this is an IDE submission
+            if submission.problem.code != '__ide__':
+                return JsonResponse({'error': _('Not an IDE submission.')}, status=400)
+
+            # Check permission - user must own the submission or be staff
+            if request.user.is_authenticated:
+                if submission.user != request.user.profile and not request.user.is_staff:
+                    return JsonResponse({'error': _('Permission denied.')}, status=403)
+            else:
+                # For anonymous submissions, we allow anyone to view
+                # (in production, you might want to use session-based auth)
+                pass
+
+            # Get submission status
+            response = {
+                'submission_id': submission.id,
+                'status': submission.status,
+                'result': submission.result,
+            }
+
+            # If still processing, return current state
+            if submission.status in ('QU', 'P', 'G'):
+                response['message'] = _('Execution in progress...')
+                return JsonResponse(response)
+
+            # If compile error
+            if submission.status == 'CE':
+                response['message'] = _('Compilation Error')
+                response['error'] = submission.error or ''
+                return JsonResponse(response)
+
+            # If internal error
+            if submission.status == 'IE':
+                response['message'] = _('Internal Error')
+                response['error'] = submission.error or _('An error occurred during execution.')
+                return JsonResponse(response)
+
+            # If completed successfully
+            if submission.status == 'D':
+                # Get test case results (should be only one for IDE)
+                test_cases = SubmissionTestCase.objects.filter(submission=submission).order_by('case')
+
+                if test_cases.exists():
+                    test_case = test_cases.first()
+
+                    response['message'] = _('Execution completed')
+                    response['stdout'] = test_case.output or ''
+                    response['stderr'] = test_case.feedback or ''
+                    response['time'] = test_case.time
+                    response['memory'] = test_case.memory
+                    response['exit_code'] = 0 if test_case.status == 'AC' else 1
+                    response['status_display'] = submission.long_status
+                else:
+                    response['message'] = _('No output')
+                    response['stdout'] = ''
+                    response['stderr'] = ''
+
+                return JsonResponse(response)
+
+            # Unknown status
+            response['message'] = _('Unknown status')
+            return JsonResponse(response)
+
+        except Submission.DoesNotExist:
+            return JsonResponse({'error': _('Submission not found.')}, status=404)
+        except Exception as e:
+            logger.error(f'Error getting submission status: {str(e)}', exc_info=True)
+            return JsonResponse({'error': _('An error occurred while checking status.')}, status=500)

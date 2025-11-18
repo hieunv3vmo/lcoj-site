@@ -191,6 +191,7 @@ urlpatterns = [
     path('ide/execute', ide.IDEExecuteView.as_view(), name='ide_execute'),
     path('ide/save', ide.IDESaveSessionView.as_view(), name='ide_save_session'),
     path('ide/load/<int:session_id>', ide.IDELoadSessionView.as_view(), name='ide_load_session'),
+    path('ide/status/<int:submission_id>', ide.IDESubmissionStatusView.as_view(), name='ide_submission_status'),
 
     path('users/', include([
         path('', user.users, name='user_list'),

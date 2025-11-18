@@ -91,7 +91,7 @@ def judge_submission(submission, rejudge=False, batch_rejudge=False, judge_id=No
             banned_judges = list(participation.contest.banned_judges.values_list('name', flat=True))
 
     try:
-        response = judge_request({
+        request_packet = {
             'name': 'submission-request',
             'submission-id': submission.id,
             'problem-id': submission.problem.code,
@@ -100,7 +100,13 @@ def judge_submission(submission, rejudge=False, batch_rejudge=False, judge_id=No
             'judge-id': judge_id,
             'banned-judges': banned_judges,
             'priority': BATCH_REJUDGE_PRIORITY if batch_rejudge else (REJUDGE_PRIORITY if rejudge else priority),
-        })
+        }
+
+        # Include meta field if present (for IDE submissions with stdin)
+        if hasattr(submission, 'meta') and submission.meta:
+            request_packet['meta'] = submission.meta
+
+        response = judge_request(request_packet)
     except BaseException:
         logger.exception('Failed to send request to judge')
         Submission.objects.filter(id=submission.id).update(status='IE', result='IE')

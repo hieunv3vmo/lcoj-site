@@ -1,0 +1,23 @@
+# Online IDE Problem Configuration
+# This is a special problem used for IDE code execution (not grading)
+
+# No archive - we don't use test case files
+archive: null
+
+# No test cases - stdin comes from meta field
+test_cases: []
+
+# Use custom grader that reads stdin from meta
+custom_judge: grader.py
+
+# Unbuffered output for real-time results
+unbuffered: true
+
+# Default point value (not used for IDE, but required)
+points: 1
+
+# Output limits
+output_limit_length: 25165824  # 24 MB
+
+# Wall time factor
+wall_time_factor: 3
