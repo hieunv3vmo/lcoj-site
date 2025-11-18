@@ -133,14 +133,29 @@
 
                     var session = editor.getSession();
                     var code = session.getValue();
-                    var mode = session.getMode().$id;
+                    var mode = session.getMode().$id || '';
 
                     // Get current cursor position
                     var cursorPos = editor.getCursorPosition();
 
-                    // Basic beautification based on language
                     try {
-                        // For now, just fix indentation
+                        // Check if code has braces - if not, don't reformat
+                        var hasBraces = /[\{\}]/.test(code);
+
+                        // For Python and languages without braces, preserve existing indentation
+                        if (mode.includes('python') || !hasBraces) {
+                            // Just clean up trailing whitespace
+                            var lines = code.split('\n');
+                            var cleaned = lines.map(function(line) {
+                                return line.trimEnd(); // Only trim right side
+                            });
+                            session.setValue(cleaned.join('\n'));
+                            editor.moveCursorToPosition(cursorPos);
+                            showMessage('{{ _("Code cleaned (trailing spaces removed)") }}', 'success');
+                            return;
+                        }
+
+                        // For brace-based languages (C, C++, Java, JS, etc.)
                         var lines = code.split('\n');
                         var indentLevel = 0;
                         var indentChar = '    '; // 4 spaces
@@ -148,33 +163,34 @@
 
                         for (var i = 0; i < lines.length; i++) {
                             var line = lines[i].trim();
+
                             if (line === '') {
                                 beautified.push('');
                                 continue;
                             }
 
-                            // Decrease indent for closing braces/brackets
-                            if (line.match(/^[\}\]\)]/)) {
+                            // Count opening/closing braces for this line
+                            var openBraces = (line.match(/\{/g) || []).length;
+                            var closeBraces = (line.match(/\}/g) || []).length;
+
+                            // Decrease indent if line starts with closing brace
+                            if (line.charAt(0) === '}') {
                                 indentLevel = Math.max(0, indentLevel - 1);
                             }
 
                             // Add indented line
                             beautified.push(indentChar.repeat(indentLevel) + line);
 
-                            // Increase indent for opening braces/brackets
-                            if (line.match(/[\{\[\(]\s*$/)) {
-                                indentLevel++;
-                            }
-                            // Decrease if both open and close on same line
-                            if (line.match(/[\{\[\(]/) && line.match(/[\}\]\)]/)) {
-                                // Do nothing, they cancel out
-                            }
+                            // Adjust indent level based on braces
+                            indentLevel += openBraces - closeBraces;
+                            indentLevel = Math.max(0, indentLevel); // Never go negative
                         }
 
                         session.setValue(beautified.join('\n'));
                         editor.moveCursorToPosition(cursorPos);
                         showMessage('{{ _("Code formatted successfully") }}', 'success');
                     } catch (e) {
+                        console.error('Beautify error:', e);
                         showMessage('{{ _("Failed to format code") }}', 'error');
                     }
                 }
