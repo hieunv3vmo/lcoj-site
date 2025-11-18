@@ -16,7 +16,7 @@
                 var editor = null;
                 $('#ace_source').on('ace_load', function (e, ace_editor) {
                     editor = ace_editor;
-                    editor.setTheme("ace/theme/twilight");
+                    editor.setTheme("ace/theme/chrome");
                     editor.setFontSize(14);
                     editor.setPrintMarginColumn(100);
                     editor.getSession().setUseWrapMode(true);
@@ -55,17 +55,33 @@
                     }
                 }
 
+                // Tab switching for stdin/output
+                $('.ide-tab').click(function() {
+                    var target = $(this).data('tab');
+                    $('.ide-tab').removeClass('active');
+                    $(this).addClass('active');
+                    $('.tab-content').removeClass('active');
+                    $('#' + target).addClass('active');
+                });
+
                 // Run code button
                 $('#run-code-btn').click(function (e) {
                     e.preventDefault();
                     runCode();
                 });
 
+                // Clear output
+                $('#clear-output-btn').click(function(e) {
+                    e.preventDefault();
+                    $('#output-content').html('<p style="color: #999; text-align: center; padding: 20px;">{{ _("Output will appear here after running your code") }}</p>');
+                    $('.ide-tab[data-tab="output-tab"]').click();
+                });
+
                 // Run code function
                 function runCode() {
                     var sourceCode = editor ? editor.getSession().getValue() : $('#id_source').val();
                     var languageId = $('#id_language').val();
-                    var stdinData = $('#id_stdin_data').val();
+                    var stdinData = $('#stdin-input').val();
 
                     if (!sourceCode || sourceCode.trim() === '') {
                         showMessage('{{ _("Please enter some code first") }}', 'error');
@@ -73,8 +89,9 @@
                     }
 
                     // Show loading state
-                    $('#run-code-btn').prop('disabled', true).text('{{ _("Running...") }}');
-                    $('#output-area').html('<div class="loading">{{ _("Executing code...") }}</div>');
+                    $('#run-code-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {{ _("Running...") }}');
+                    $('#output-content').html('<p style="color: #999; text-align: center; padding: 20px;"><i class="fa fa-spinner fa-spin"></i> {{ _("Executing code...") }}</p>');
+                    $('.ide-tab[data-tab="output-tab"]').click();
 
                     // Send to execution endpoint
                     $.ajax({
@@ -98,41 +115,44 @@
                                 errorMsg = xhr.responseJSON.error;
                             }
                             showMessage(errorMsg, 'error');
-                            $('#output-area').html('<div class="error">' + errorMsg + '</div>');
+                            $('#output-content').html('<div class="output-error"><i class="fa fa-exclamation-triangle"></i> ' + errorMsg + '</div>');
                         },
                         complete: function () {
-                            $('#run-code-btn').prop('disabled', false).text('{{ _("Run Code") }}');
+                            $('#run-code-btn').prop('disabled', false).html('<i class="fa fa-play"></i> {{ _("Run Code") }}');
                         }
                     });
                 }
 
                 // Display output
                 function displayOutput(response) {
-                    var html = '<div class="output-container">';
+                    var html = '';
 
                     if (response.status === 'queued') {
-                        html += '<div class="alert alert-info">' + response.message + '</div>';
+                        html += '<div class="output-info"><i class="fa fa-info-circle"></i> ' + response.message + '</div>';
                     } else if (response.stdout) {
-                        html += '<h4>{{ _("Output:") }}</h4>';
+                        html += '<div class="output-section"><strong>{{ _("Output:") }}</strong></div>';
                         html += '<pre class="output-stdout">' + escapeHtml(response.stdout) + '</pre>';
                     }
 
                     if (response.stderr) {
-                        html += '<h4>{{ _("Errors:") }}</h4>';
+                        html += '<div class="output-section"><strong>{{ _("Errors:") }}</strong></div>';
                         html += '<pre class="output-stderr">' + escapeHtml(response.stderr) + '</pre>';
                     }
 
                     if (response.time) {
                         html += '<div class="output-stats">';
-                        html += '<span>{{ _("Time:") }} ' + response.time + 's</span> ';
+                        html += '<span><i class="fa fa-clock-o"></i> {{ _("Time:") }} ' + response.time + 's</span>';
                         if (response.memory) {
-                            html += '<span>{{ _("Memory:") }} ' + response.memory + ' KB</span>';
+                            html += '<span style="margin-left: 15px;"><i class="fa fa-memory"></i> {{ _("Memory:") }} ' + response.memory + ' KB</span>';
                         }
                         html += '</div>';
                     }
 
-                    html += '</div>';
-                    $('#output-area').html(html);
+                    if (html === '') {
+                        html = '<p style="color: #999; text-align: center; padding: 20px;">{{ _("No output") }}</p>';
+                    }
+
+                    $('#output-content').html(html);
                 }
 
                 // Save session (for logged-in users)
@@ -145,7 +165,7 @@
                 function saveSession() {
                     var sourceCode = editor ? editor.getSession().getValue() : $('#id_source').val();
                     var languageId = $('#id_language').val();
-                    var stdinData = $('#id_stdin_data').val();
+                    var stdinData = $('#stdin-input').val();
 
                     $.ajax({
                         url: '{{ url("ide_save_session") }}',
@@ -161,7 +181,7 @@
                         },
                         success: function (response) {
                             showMessage(response.message, 'success');
-                            // Optionally reload session list
+                            location.reload();
                         },
                         error: function (xhr, status, error) {
                             var errorMsg = '{{ _("Failed to save session") }}';
@@ -189,7 +209,7 @@
                             if (editor) {
                                 editor.getSession().setValue(response.source);
                             }
-                            $('#id_stdin_data').val(response.stdin);
+                            $('#stdin-input').val(response.stdin);
                             showMessage('{{ _("Session loaded successfully") }}', 'success');
                         },
                         error: function (xhr, status, error) {
@@ -201,8 +221,8 @@
 
                 // Helper functions
                 function showMessage(message, type) {
-                    var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-                    var alertHtml = '<div class="alert ' + alertClass + ' alert-dismissable">' +
+                    var alertClass = type === 'success' ? 'alert-success' : (type === 'error' ? 'alert-danger' : 'alert-info');
+                    var alertHtml = '<div class="alert ' + alertClass + ' alert-dismissable" style="margin-top: 10px;">' +
                                    '<a class="close" data-dismiss="alert">×</a>' +
                                    message + '</div>';
                     $('#message-area').html(alertHtml);
@@ -224,7 +244,7 @@
 
                 // Auto-resize editor
                 $(window).resize(function () {
-                    var height = Math.max($(window).height() - 400, 300);
+                    var height = Math.max($(window).height() - 450, 300);
                     $('#ace_source').height(height);
                     if (editor) {
                         editor.resize();
@@ -238,62 +258,79 @@
 {% block media %}
     {{ form.media.css }}
     <style>
+        .content-description {
+            padding: 1em 1em 0.5em;
+        }
+
+        .ide-header {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .ide-header h2 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .ide-header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
         .ide-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .ide-left-panel {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .ide-right-panel {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .ide-section {
-            background: #2a2a2a;
-            border-radius: 5px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
             padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .ide-controls {
+            display: flex;
+            gap: 15px;
             margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
-        .ide-section h3 {
-            margin-top: 0;
-            color: #fff;
-            font-size: 16px;
-            margin-bottom: 10px;
+        .ide-control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .ide-input-area {
-            width: 100%;
-            background: #1e1e1e;
-            color: #d4d4d4;
-            border: 1px solid #3c3c3c;
-            border-radius: 3px;
-            padding: 10px;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
+        .ide-control-group label {
+            font-weight: bold;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .ide-control-group select {
+            min-width: 200px;
         }
 
         .ide-buttons {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 8px;
+            margin-left: auto;
         }
 
         .ide-btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border: none;
             border-radius: 3px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: bold;
-            transition: all 0.3s;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ide-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .ide-btn-primary {
@@ -301,7 +338,7 @@
             color: white;
         }
 
-        .ide-btn-primary:hover {
+        .ide-btn-primary:hover:not(:disabled) {
             background: #218838;
         }
 
@@ -310,48 +347,160 @@
             color: white;
         }
 
-        .ide-btn-secondary:hover {
+        .ide-btn-secondary:hover:not(:disabled) {
             background: #0069d9;
         }
 
-        #output-area {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            border: 1px solid #3c3c3c;
+        .ide-btn-default {
+            background: #6c757d;
+            color: white;
+        }
+
+        .ide-btn-default:hover:not(:disabled) {
+            background: #5a6268;
+        }
+
+        .ide-editor-section {
+            margin-bottom: 15px;
+        }
+
+        .ide-editor-section h3 {
+            font-size: 1.2em;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        #ace_source {
+            border: 1px solid #ccc;
             border-radius: 3px;
+        }
+
+        .ide-io-container {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .ide-tabs {
+            display: flex;
+            background: #f8f8f8;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .ide-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-right: 1px solid #ccc;
+            background: #f8f8f8;
+            transition: background 0.2s;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .ide-tab:hover {
+            background: #e8e8e8;
+        }
+
+        .ide-tab.active {
+            background: #fff;
+            color: #1958c1;
+            border-bottom: 2px solid #1958c1;
+            margin-bottom: -1px;
+        }
+
+        .tab-content {
+            display: none;
             padding: 15px;
-            min-height: 200px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        #stdin-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 13px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            resize: vertical;
+        }
+
+        #output-content {
+            min-height: 150px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .output-info {
+            padding: 12px;
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 3px;
+            color: #0c5460;
+        }
+
+        .output-error {
+            padding: 12px;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 3px;
+            color: #721c24;
+        }
+
+        .output-section {
+            margin: 10px 0 5px;
+            color: #333;
         }
 
         .output-stdout {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 10px;
-            border-radius: 3px;
+            background: #f8f8f8;
+            padding: 12px;
             border-left: 3px solid #28a745;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            margin: 5px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
 
         .output-stderr {
-            background: #1e1e1e;
-            color: #ff6b6b;
-            padding: 10px;
-            border-radius: 3px;
+            background: #fff5f5;
+            padding: 12px;
             border-left: 3px solid #dc3545;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            margin: 5px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #721c24;
         }
 
         .output-stats {
             margin-top: 10px;
             padding-top: 10px;
-            border-top: 1px solid #3c3c3c;
-            color: #888;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 0.95em;
         }
 
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #888;
+        .sessions-sidebar {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .sessions-sidebar h3 {
+            font-size: 1.2em;
+            margin-bottom: 12px;
+            color: #333;
         }
 
         .sessions-list {
@@ -360,101 +509,142 @@
         }
 
         .session-item {
-            padding: 8px;
-            margin-bottom: 5px;
-            background: #1e1e1e;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
             border-radius: 3px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }
 
         .session-item:hover {
-            background: #2a2a2a;
+            background: #e8e8e8;
+            border-color: #1958c1;
+        }
+
+        .session-item strong {
+            color: #1958c1;
+        }
+
+        .session-item small {
+            color: #666;
+            font-size: 0.9em;
         }
 
         @media (max-width: 768px) {
-            .ide-container {
-                grid-template-columns: 1fr;
+            .ide-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .ide-buttons {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .ide-btn {
+                flex: 1;
+            }
+
+            .ide-control-group select {
+                width: 100%;
             }
         }
     </style>
 {% endblock %}
 
 {% block body %}
-    <div id="message-area"></div>
+    <div class="content-description">
+        <div id="message-area"></div>
 
-    <div style="text-align: center; margin: 20px 0;">
-        <h1>{{ _('Online IDE') }}</h1>
-        <p>{{ _('Write, compile, and execute code in multiple programming languages') }}</p>
-    </div>
+        <div class="ide-header">
+            <h2>{{ _('Online IDE') }}</h2>
+            <p>{{ _('Write, compile, and execute code in multiple programming languages') }}</p>
+        </div>
 
-    <form id="ide-form" method="post">
-        {% csrf_token %}
+        <form id="ide-form" method="post">
+            {% csrf_token %}
 
-        <div class="ide-container">
-            <!-- Left Panel: Editor -->
-            <div class="ide-left-panel">
-                <div class="ide-section">
-                    <h3>{{ _('Language') }}</h3>
-                    <select id="id_language" name="language">
-                        {% for lang in form.fields.language.queryset %}
-                            <option value="{{ lang.id }}"
-                                    data-ace="{{ lang.ace }}"
-                                    {% if form.initial.language and form.initial.language.id == lang.id %}selected{% endif %}>
-                                {{ lang.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
+            <!-- Editor Section -->
+            <div class="ide-container">
+                <div class="ide-controls">
+                    <div class="ide-control-group">
+                        <label for="id_language">{{ _('Language:') }}</label>
+                        <select id="id_language" name="language">
+                            {% for lang in form.fields.language.queryset %}
+                                <option value="{{ lang.id }}"
+                                        data-ace="{{ lang.ace }}"
+                                        {% if form.initial.language and form.initial.language.id == lang.id %}selected{% endif %}>
+                                    {{ lang.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="ide-buttons">
+                        <button type="button" id="run-code-btn" class="ide-btn ide-btn-primary">
+                            <i class="fa fa-play"></i> {{ _('Run Code') }}
+                        </button>
+                        {% if request.user.is_authenticated %}
+                        <button type="button" id="save-session-btn" class="ide-btn ide-btn-secondary">
+                            <i class="fa fa-save"></i> {{ _('Save Session') }}
+                        </button>
+                        {% endif %}
+                        <button type="button" id="clear-output-btn" class="ide-btn ide-btn-default">
+                            <i class="fa fa-eraser"></i> {{ _('Clear Output') }}
+                        </button>
+                    </div>
                 </div>
 
-                <div class="ide-section" style="flex: 1;">
+                <div class="ide-editor-section">
                     <h3>{{ _('Source Code') }}</h3>
                     {{ form.source.errors }}
                     {{ form.source }}
                 </div>
-
-                <div class="ide-buttons">
-                    <button type="button" id="run-code-btn" class="ide-btn ide-btn-primary">
-                        {{ _('Run Code') }}
-                    </button>
-                    {% if request.user.is_authenticated %}
-                    <button type="button" id="save-session-btn" class="ide-btn ide-btn-secondary">
-                        {{ _('Save Session') }}
-                    </button>
-                    {% endif %}
-                </div>
             </div>
 
-            <!-- Right Panel: Input/Output -->
-            <div class="ide-right-panel">
-                <div class="ide-section">
-                    <h3>{{ _('Standard Input') }}</h3>
-                    {{ form.stdin_data }}
-                </div>
-
-                <div class="ide-section" style="flex: 1;">
-                    <h3>{{ _('Output') }}</h3>
-                    <div id="output-area">
-                        <div style="color: #888; text-align: center; padding: 40px;">
-                            {{ _('Click "Run Code" to see the output here') }}
-                        </div>
+            <!-- Input/Output Section -->
+            <div class="ide-io-container">
+                <div class="ide-tabs">
+                    <div class="ide-tab active" data-tab="stdin-tab">
+                        <i class="fa fa-keyboard-o"></i> {{ _('Standard Input') }}
+                    </div>
+                    <div class="ide-tab" data-tab="output-tab">
+                        <i class="fa fa-terminal"></i> {{ _('Output') }}
                     </div>
                 </div>
 
-                {% if request.user.is_authenticated and user_sessions %}
-                <div class="ide-section">
-                    <h3>{{ _('Recent Sessions') }}</h3>
-                    <div class="sessions-list">
-                        {% for session in user_sessions %}
-                        <div class="session-item load-session-btn" data-session-id="{{ session.id }}">
-                            <strong>{{ session.language.name }}</strong><br>
-                            <small>{{ session.last_modified|date(_("Y-m-d H:i")) }}</small>
-                        </div>
-                        {% endfor %}
+                <div id="stdin-tab" class="tab-content active">
+                    <label for="stdin-input" style="display: block; margin-bottom: 8px; font-weight: bold;">
+                        {{ _('Input data (optional):') }}
+                    </label>
+                    <textarea id="stdin-input" name="stdin_data" placeholder="{{ _('Enter input data here (will be passed as stdin to your program)...') }}">{{ form.initial.stdin_data or '' }}</textarea>
+                </div>
+
+                <div id="output-tab" class="tab-content">
+                    <div id="output-content">
+                        <p style="color: #999; text-align: center; padding: 20px;">
+                            {{ _('Output will appear here after running your code') }}
+                        </p>
                     </div>
                 </div>
-                {% endif %}
+            </div>
+        </form>
+
+        <!-- Sessions Sidebar (for logged-in users) -->
+        {% if request.user.is_authenticated and user_sessions %}
+        <div class="sessions-sidebar">
+            <h3><i class="fa fa-history"></i> {{ _('Recent Sessions') }}</h3>
+            <div class="sessions-list">
+                {% for session in user_sessions %}
+                <div class="session-item load-session-btn" data-session-id="{{ session.id }}">
+                    <div><strong>{{ session.language.name }}</strong></div>
+                    <small><i class="fa fa-clock-o"></i> {{ session.last_modified|date(_("Y-m-d H:i")) }}</small>
+                </div>
+                {% endfor %}
             </div>
         </div>
-    </form>
+        {% endif %}
+    </div>
 {% endblock %}
