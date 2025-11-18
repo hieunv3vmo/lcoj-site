@@ -1,0 +1,460 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    <script type="text/javascript" src="{{ ACE_URL }}/ace.js"></script>
+    {{ form.media.js }}
+    {% compress js %}
+        <script type="text/javascript">
+            $(function () {
+                // Language selector initialization
+                $("#id_language").select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}',
+                    width: '100%'
+                });
+
+                // ACE Editor configuration
+                var editor = null;
+                $('#ace_source').on('ace_load', function (e, ace_editor) {
+                    editor = ace_editor;
+                    editor.setTheme("ace/theme/twilight");
+                    editor.setFontSize(14);
+                    editor.setPrintMarginColumn(100);
+                    editor.getSession().setUseWrapMode(true);
+                    editor.focus();
+
+                    // Save to localStorage on Ctrl+S
+                    editor.commands.addCommand({
+                        name: 'save',
+                        bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
+                        exec: function () {
+                            var langId = $('#id_language').val();
+                            localStorage.setItem('ide:' + langId, editor.getSession().getValue());
+                            showMessage('{{ _("Code saved to browser storage") }}', 'success');
+                        }
+                    });
+
+                    // Load from localStorage if exists
+                    loadFromLocalStorage();
+                });
+
+                // Language change handler
+                $('#id_language').change(function () {
+                    var lang = $("#id_language").find("option:selected").attr('data-ace');
+                    if (editor && lang) {
+                        editor.getSession().setMode("ace/mode/" + lang);
+                    }
+                    loadFromLocalStorage();
+                });
+
+                // Load code from localStorage
+                function loadFromLocalStorage() {
+                    var langId = $('#id_language').val();
+                    var code = localStorage.getItem('ide:' + langId);
+                    if (code && editor) {
+                        editor.getSession().setValue(code);
+                    }
+                }
+
+                // Run code button
+                $('#run-code-btn').click(function (e) {
+                    e.preventDefault();
+                    runCode();
+                });
+
+                // Run code function
+                function runCode() {
+                    var sourceCode = editor ? editor.getSession().getValue() : $('#id_source').val();
+                    var languageId = $('#id_language').val();
+                    var stdinData = $('#id_stdin_data').val();
+
+                    if (!sourceCode || sourceCode.trim() === '') {
+                        showMessage('{{ _("Please enter some code first") }}', 'error');
+                        return;
+                    }
+
+                    // Show loading state
+                    $('#run-code-btn').prop('disabled', true).text('{{ _("Running...") }}');
+                    $('#output-area').html('<div class="loading">{{ _("Executing code...") }}</div>');
+
+                    // Send to execution endpoint
+                    $.ajax({
+                        url: '{{ url("ide_execute") }}',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            source: sourceCode,
+                            language: languageId,
+                            stdin: stdinData
+                        }),
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        success: function (response) {
+                            displayOutput(response);
+                        },
+                        error: function (xhr, status, error) {
+                            var errorMsg = '{{ _("An error occurred while executing your code") }}';
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                errorMsg = xhr.responseJSON.error;
+                            }
+                            showMessage(errorMsg, 'error');
+                            $('#output-area').html('<div class="error">' + errorMsg + '</div>');
+                        },
+                        complete: function () {
+                            $('#run-code-btn').prop('disabled', false).text('{{ _("Run Code") }}');
+                        }
+                    });
+                }
+
+                // Display output
+                function displayOutput(response) {
+                    var html = '<div class="output-container">';
+
+                    if (response.status === 'queued') {
+                        html += '<div class="alert alert-info">' + response.message + '</div>';
+                    } else if (response.stdout) {
+                        html += '<h4>{{ _("Output:") }}</h4>';
+                        html += '<pre class="output-stdout">' + escapeHtml(response.stdout) + '</pre>';
+                    }
+
+                    if (response.stderr) {
+                        html += '<h4>{{ _("Errors:") }}</h4>';
+                        html += '<pre class="output-stderr">' + escapeHtml(response.stderr) + '</pre>';
+                    }
+
+                    if (response.time) {
+                        html += '<div class="output-stats">';
+                        html += '<span>{{ _("Time:") }} ' + response.time + 's</span> ';
+                        if (response.memory) {
+                            html += '<span>{{ _("Memory:") }} ' + response.memory + ' KB</span>';
+                        }
+                        html += '</div>';
+                    }
+
+                    html += '</div>';
+                    $('#output-area').html(html);
+                }
+
+                // Save session (for logged-in users)
+                {% if request.user.is_authenticated %}
+                $('#save-session-btn').click(function (e) {
+                    e.preventDefault();
+                    saveSession();
+                });
+
+                function saveSession() {
+                    var sourceCode = editor ? editor.getSession().getValue() : $('#id_source').val();
+                    var languageId = $('#id_language').val();
+                    var stdinData = $('#id_stdin_data').val();
+
+                    $.ajax({
+                        url: '{{ url("ide_save_session") }}',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            source: sourceCode,
+                            language: languageId,
+                            stdin: stdinData
+                        }),
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        success: function (response) {
+                            showMessage(response.message, 'success');
+                            // Optionally reload session list
+                        },
+                        error: function (xhr, status, error) {
+                            var errorMsg = '{{ _("Failed to save session") }}';
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                errorMsg = xhr.responseJSON.error;
+                            }
+                            showMessage(errorMsg, 'error');
+                        }
+                    });
+                }
+
+                // Load session
+                $('.load-session-btn').click(function (e) {
+                    e.preventDefault();
+                    var sessionId = $(this).data('session-id');
+                    loadSession(sessionId);
+                });
+
+                function loadSession(sessionId) {
+                    $.ajax({
+                        url: '{{ url("ide_load_session", 0) }}'.replace('/0', '/' + sessionId),
+                        type: 'GET',
+                        success: function (response) {
+                            $('#id_language').val(response.language).trigger('change');
+                            if (editor) {
+                                editor.getSession().setValue(response.source);
+                            }
+                            $('#id_stdin_data').val(response.stdin);
+                            showMessage('{{ _("Session loaded successfully") }}', 'success');
+                        },
+                        error: function (xhr, status, error) {
+                            showMessage('{{ _("Failed to load session") }}', 'error');
+                        }
+                    });
+                }
+                {% endif %}
+
+                // Helper functions
+                function showMessage(message, type) {
+                    var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                    var alertHtml = '<div class="alert ' + alertClass + ' alert-dismissable">' +
+                                   '<a class="close" data-dismiss="alert">×</a>' +
+                                   message + '</div>';
+                    $('#message-area').html(alertHtml);
+                    setTimeout(function () {
+                        $('#message-area').fadeOut(function () {
+                            $(this).html('').show();
+                        });
+                    }, 5000);
+                }
+
+                function escapeHtml(text) {
+                    return text
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/"/g, "&quot;")
+                        .replace(/'/g, "&#039;");
+                }
+
+                // Auto-resize editor
+                $(window).resize(function () {
+                    var height = Math.max($(window).height() - 400, 300);
+                    $('#ace_source').height(height);
+                    if (editor) {
+                        editor.resize();
+                    }
+                }).resize();
+            });
+        </script>
+    {% endcompress %}
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+    <style>
+        .ide-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .ide-left-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ide-right-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ide-section {
+            background: #2a2a2a;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .ide-section h3 {
+            margin-top: 0;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .ide-input-area {
+            width: 100%;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #3c3c3c;
+            border-radius: 3px;
+            padding: 10px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .ide-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .ide-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .ide-btn-primary {
+            background: #28a745;
+            color: white;
+        }
+
+        .ide-btn-primary:hover {
+            background: #218838;
+        }
+
+        .ide-btn-secondary {
+            background: #007bff;
+            color: white;
+        }
+
+        .ide-btn-secondary:hover {
+            background: #0069d9;
+        }
+
+        #output-area {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #3c3c3c;
+            border-radius: 3px;
+            padding: 15px;
+            min-height: 200px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .output-stdout {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 10px;
+            border-radius: 3px;
+            border-left: 3px solid #28a745;
+        }
+
+        .output-stderr {
+            background: #1e1e1e;
+            color: #ff6b6b;
+            padding: 10px;
+            border-radius: 3px;
+            border-left: 3px solid #dc3545;
+        }
+
+        .output-stats {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #3c3c3c;
+            color: #888;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+
+        .sessions-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .session-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: #1e1e1e;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .session-item:hover {
+            background: #2a2a2a;
+        }
+
+        @media (max-width: 768px) {
+            .ide-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div id="message-area"></div>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <h1>{{ _('Online IDE') }}</h1>
+        <p>{{ _('Write, compile, and execute code in multiple programming languages') }}</p>
+    </div>
+
+    <form id="ide-form" method="post">
+        {% csrf_token %}
+
+        <div class="ide-container">
+            <!-- Left Panel: Editor -->
+            <div class="ide-left-panel">
+                <div class="ide-section">
+                    <h3>{{ _('Language') }}</h3>
+                    <select id="id_language" name="language">
+                        {% for lang in form.fields.language.queryset %}
+                            <option value="{{ lang.id }}"
+                                    data-ace="{{ lang.ace }}"
+                                    {% if form.initial.language.id == lang.id %}selected{% endif %}>
+                                {{ lang.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="ide-section" style="flex: 1;">
+                    <h3>{{ _('Source Code') }}</h3>
+                    {{ form.source.errors }}
+                    {{ form.source }}
+                </div>
+
+                <div class="ide-buttons">
+                    <button type="button" id="run-code-btn" class="ide-btn ide-btn-primary">
+                        {{ _('Run Code') }}
+                    </button>
+                    {% if request.user.is_authenticated %}
+                    <button type="button" id="save-session-btn" class="ide-btn ide-btn-secondary">
+                        {{ _('Save Session') }}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Panel: Input/Output -->
+            <div class="ide-right-panel">
+                <div class="ide-section">
+                    <h3>{{ _('Standard Input') }}</h3>
+                    {{ form.stdin_data }}
+                </div>
+
+                <div class="ide-section" style="flex: 1;">
+                    <h3>{{ _('Output') }}</h3>
+                    <div id="output-area">
+                        <div style="color: #888; text-align: center; padding: 40px;">
+                            {{ _('Click "Run Code" to see the output here') }}
+                        </div>
+                    </div>
+                </div>
+
+                {% if request.user.is_authenticated and user_sessions %}
+                <div class="ide-section">
+                    <h3>{{ _('Recent Sessions') }}</h3>
+                    <div class="sessions-list">
+                        {% for session in user_sessions %}
+                        <div class="session-item load-session-btn" data-session-id="{{ session.id }}">
+                            <strong>{{ session.language.name }}</strong><br>
+                            <small>{{ session.last_modified|date:"Y-m-d H:i" }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+{% endblock %}

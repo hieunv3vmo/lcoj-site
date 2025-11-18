@@ -14,9 +14,9 @@ from django.views.generic import RedirectView
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
-from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
-    preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
-    two_factor, user, widgets
+from judge.views import TitledTemplateView, api, blog, comment, contests, ide, language, license, mailgun, \
+    organization, preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, \
+    tasks, ticket, two_factor, user, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
@@ -185,6 +185,12 @@ urlpatterns = [
         path('', submission.SubmissionStatus.as_view(), name='submission_status'),
         path('/abort', submission.abort_submission, name='submission_abort'),
     ])),
+
+    # Online IDE
+    path('ide/', ide.OnlineIDEView.as_view(), name='ide'),
+    path('ide/execute', ide.IDEExecuteView.as_view(), name='ide_execute'),
+    path('ide/save', ide.IDESaveSessionView.as_view(), name='ide_save_session'),
+    path('ide/load/<int:session_id>', ide.IDELoadSessionView.as_view(), name='ide_load_session'),
 
     path('users/', include([
         path('', user.users, name='user_list'),
