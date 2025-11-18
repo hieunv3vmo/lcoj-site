@@ -286,11 +286,7 @@
         }
 
         .ide-controls {
-            display: flex;
-            gap: 15px;
             margin-bottom: 15px;
-            align-items: center;
-            flex-wrap: wrap;
         }
 
         .ide-control-group {
@@ -309,10 +305,12 @@
             min-width: 200px;
         }
 
-        .ide-buttons {
+        .ide-action-buttons {
             display: flex;
             gap: 8px;
-            margin-left: auto;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
         }
 
         .ide-btn {
@@ -533,18 +531,18 @@
         }
 
         @media (max-width: 768px) {
-            .ide-controls {
+            .ide-action-buttons {
                 flex-direction: column;
-                align-items: stretch;
-            }
-
-            .ide-buttons {
-                margin-left: 0;
-                width: 100%;
             }
 
             .ide-btn {
-                flex: 1;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .ide-control-group {
+                flex-direction: column;
+                align-items: stretch;
             }
 
             .ide-control-group select {
@@ -581,26 +579,26 @@
                             {% endfor %}
                         </select>
                     </div>
-
-                    <div class="ide-buttons">
-                        <button type="button" id="run-code-btn" class="ide-btn ide-btn-primary">
-                            <i class="fa fa-play"></i> {{ _('Run Code') }}
-                        </button>
-                        {% if request.user.is_authenticated %}
-                        <button type="button" id="save-session-btn" class="ide-btn ide-btn-secondary">
-                            <i class="fa fa-save"></i> {{ _('Save Session') }}
-                        </button>
-                        {% endif %}
-                        <button type="button" id="clear-output-btn" class="ide-btn ide-btn-default">
-                            <i class="fa fa-eraser"></i> {{ _('Clear Output') }}
-                        </button>
-                    </div>
                 </div>
 
                 <div class="ide-editor-section">
                     <h3>{{ _('Source Code') }}</h3>
                     {{ form.source.errors }}
                     {{ form.source }}
+                </div>
+
+                <div class="ide-action-buttons">
+                    <button type="button" id="run-code-btn" class="ide-btn ide-btn-primary">
+                        <i class="fa fa-play"></i> {{ _('Run Code') }}
+                    </button>
+                    {% if request.user.is_authenticated %}
+                    <button type="button" id="save-session-btn" class="ide-btn ide-btn-secondary">
+                        <i class="fa fa-save"></i> {{ _('Save Session') }}
+                    </button>
+                    {% endif %}
+                    <button type="button" id="clear-output-btn" class="ide-btn ide-btn-default">
+                        <i class="fa fa-eraser"></i> {{ _('Clear Output') }}
+                    </button>
                 </div>
             </div>
 
